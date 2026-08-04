@@ -1,0 +1,638 @@
+# OpenAPI 3.0.3 — url-launcher Tauri invoke command contract
+#
+# 用途：本文件是 Phase 2 的唯一契约（spec-as-contract）。前端据此用
+#   openapi-typescript / json-schema-to-ts 生成 TS 类型；后端 Rust 命令签名
+#   必须与 components.schemas 字段一一对齐。
+#
+# 约定：
+#   - Tauri invoke 命令不是 REST 端点。这里把每个命令建模为
+#     POST /commands/{commandName}，operationId == Tauri 命令名。
+#   - requestBody = invoke(args)；responses.200.content = invoke 返回值。
+#   - 数据库列（spec 第 6 节）用 snake_case；前端 TS 用 camelCase 映射
+#     （created_at -> createdAt, category_id -> categoryId, favicon_path -> faviconPath）。
+#   - 所有字符串入参均来自 app（用户/书签文件），Rust 侧全参数化，禁止拼接。
+
+openapi: 3.0.3
+info:
+  title: url-launcher API
+  version: 0.1.0
+  description: >
+    Tauri 2 invoke 命令契约。命令列表严格对应 spec 第 5 节。
+    额外命令 drag_resolve 为拖拽双通道桥接的补充（spec 第 11 节坑：链接拖拽 MIME 歧义）。
+
+servers:
+  - url: tauri://localhost
+    description: Tauri IPC (invoke)
+
+paths:
+  /commands/urls_list:
+    post:
+      operationId: urls_list
+      summary: 列出/搜索链接（默认 limit=200）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UrlsListArgs'
+      responses:
+        '200':
+          description: 链接数组
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Url'
+
+  /commands/url_create:
+    post:
+      operationId: url_create
+      summary: 手动添加链接，触发后台 fetch_meta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UrlCreateArgs'
+      responses:
+        '200':
+          description: 新建的链接
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Url'
+
+  /commands/url_update:
+    post:
+      operationId: url_update
+      summary: 编辑链接
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UrlUpdateArgs'
+      responses:
+        '200':
+          description: 更新后的链接
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Url'
+
+  /commands/url_delete:
+    post:
+      operationId: url_delete
+      summary: 删除链接
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdArgs'
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/url_refresh_meta:
+    post:
+      operationId: url_refresh_meta
+      summary: 手动刷新标题/favicon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdArgs'
+      responses:
+        '200':
+          description: 刷新后的链接
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Url'
+
+  /commands/categories_list:
+    post:
+      operationId: categories_list
+      summary: 列出分类（含计数）
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 分类数组（含 count）
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /commands/category_create:
+    post:
+      operationId: category_create
+      summary: 新建分类
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateArgs'
+      responses:
+        '200':
+          description: 新建的分类
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+
+  /commands/category_update:
+    post:
+      operationId: category_update
+      summary: 编辑分类
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateArgs'
+      responses:
+        '200':
+          description: 更新后的分类
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+
+  /commands/category_delete:
+    post:
+      operationId: category_delete
+      summary: 删除分类，其下链接归"未分类"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdArgs'
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/category_reorder:
+    post:
+      operationId: category_reorder
+      summary: 拖拽排序分类
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryReorderArgs'
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/bookmarks_import:
+    post:
+      operationId: bookmarks_import
+      summary: 解析 Netscape 书签 HTML 并批量入库去重
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarksImportArgs'
+      responses:
+        '200':
+          description: 导入结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+
+  /commands/import_json:
+    post:
+      operationId: import_json
+      summary: 导入备份 JSON（完整备份/仅链接/裸数组三种形态），按分类名跨库还原
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportJsonArgs'
+      responses:
+        '200':
+          description: 导入结果（重复或非 http/https 计入 skipped）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+
+  /commands/fetch_meta:
+    post:
+      operationId: fetch_meta
+      summary: 在线抓取标题/favicon（超时5s降级）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FetchMetaArgs'
+      responses:
+        '200':
+          description: 抓取结果（name/favicon 失败则降级）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UrlMeta'
+
+  /commands/settings_get:
+    post:
+      operationId: settings_get
+      summary: 读取设置
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 设置对象
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+
+  /commands/settings_set:
+    post:
+      operationId: settings_set
+      summary: 持久化设置
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/autostart_enable:
+    post:
+      operationId: autostart_enable
+      summary: 开启开机自启
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/autostart_disable:
+    post:
+      operationId: autostart_disable
+      summary: 关闭开机自启
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/autostart_is_enabled:
+    post:
+      operationId: autostart_is_enabled
+      summary: 查询开机自启状态
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 是否开启
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /commands/panel_toggle:
+    post:
+      operationId: panel_toggle
+      summary: 全局快捷键触发（由 Rust 侧调用前端，前端通常不主动 invoke）
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 成功（void）
+
+  /commands/drag_resolve:
+    post:
+      operationId: drag_resolve
+      summary: >
+        拖拽双通道桥接（spec 第 11 节坑）：前端 HTML5 drop 取到
+        dataTransfer.getData('text/uri-list') 后，交给 Rust 解析为 UrlDraft 列表。
+        Rust 侧 on_drag_drop 处理文件路径（.html/.url）也调用同一 resolve 逻辑。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DragResolveArgs'
+      responses:
+        '200':
+          description: 解析出的链接草稿
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UrlDraft'
+
+components:
+  schemas:
+    # ---------- 领域实体（与 spec 第 6 节 DB 列对齐） ----------
+
+    Url:
+      type: object
+      description: links 表一行。url NOT NULL；category_id 可空；favicon_path 可空。
+      required: [id, url, createdAt]
+      properties:
+        id:
+          type: string
+          description: 主键（TEXT，uuid）
+        title:
+          type: string
+          nullable: true
+          description: 标题；为空时前端回退显示 url
+        url:
+          type: string
+          format: uri
+          description: 链接地址（NOT NULL，仅允许 http/https）
+        categoryId:
+          type: string
+          nullable: true
+          description: 分类外键；NULL 表示"未分类"
+        note:
+          type: string
+          nullable: true
+        faviconPath:
+          type: string
+          nullable: true
+          description: app_data_dir/favicons/{sha1(url)}.png；无则为 NULL
+        createdAt:
+          type: string
+          description: ISO8601 时间戳（created_at TEXT）
+
+    Category:
+      type: object
+      description: categories 表一行。name NOT NULL；color/icon 可空。
+      required: [id, name, sort, createdAt]
+      properties:
+        id:
+          type: string
+          description: 主键（TEXT）
+        name:
+          type: string
+          description: 分类名（NOT NULL）
+        sort:
+          type: integer
+          default: 0
+          description: 排序权重（sort INT DEFAULT 0）
+        color:
+          type: string
+          nullable: true
+          description: 分类颜色（design-token 允许的 CSS 色值字符串）
+        icon:
+          type: string
+          nullable: true
+          description: lucide-react 图标名
+        createdAt:
+          type: string
+          description: ISO8601 时间戳
+        count:
+          type: integer
+          description: 该分类下链接数（categories_list 聚合，DB 无此列）
+
+    Settings:
+      type: object
+      description: >
+        settings 表 KV 行在应用层的结构化视图（键 hotkey/defaultBrowser/autostart）。
+        持久化时拆回 key/value 行。
+      required: [hotkey, defaultBrowser, autostart]
+      properties:
+        hotkey:
+          type: string
+          description: 全局快捷键组合，如 "Alt+Space"（'Mod+Key' 形式）
+        defaultBrowser:
+          type: string
+          description: "'chrome' | 'msedge' | 'firefox' | '<自定义 exe 绝对路径>'"
+          enum: [chrome, msedge, firefox]
+          # 注：自定义 exe 路径不是枚举值，但类型为 string，可由校验层放行
+        autostart:
+          type: boolean
+          description: 是否开机自启
+
+    ImportResult:
+      type: object
+      description: bookmarks_import 返回值
+      required: [imported, skipped]
+      properties:
+        imported:
+          type: integer
+          description: 成功入库条数
+        skipped:
+          type: integer
+          description: 跳过（重复/非法）条数
+
+    UrlMeta:
+      type: object
+      description: fetch_meta 返回值
+      required: [title]
+      properties:
+        title:
+          type: string
+          description: 抓取到的标题；失败降级为 url
+        faviconPath:
+          type: string
+          nullable: true
+          description: 抓取并落盘的 favicon 路径；失败/离线为 NULL
+
+    UrlDraft:
+      type: object
+      description: >
+        链接草稿，由拖拽/书签解析产生，待用户确认分类后写入 links。
+        仅 url 必填，其余可空。
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: 解析出的链接（http/https）
+        title:
+          type: string
+          nullable: true
+          description: 书签文件中的标题；拖拽直链可能为 NULL
+        categoryId:
+          type: string
+          nullable: true
+          description: 由书签文件夹推断的分类；无则为 NULL（待用户选）
+
+    # ---------- 命令入参 ----------
+
+    UrlsListArgs:
+      type: object
+      properties:
+        categoryId:
+          type: string
+          nullable: true
+          description: 按分类过滤；NULL/缺省=全部
+        search:
+          type: string
+          nullable: true
+          description: 关键词（标题/URL/分类名），实时过滤
+        limit:
+          type: integer
+          default: 200
+          description: 返回上限
+
+    UrlCreateArgs:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+          nullable: true
+        categoryId:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+
+    UrlUpdateArgs:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          nullable: true
+        categoryId:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+
+    IdArgs:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+
+    CategoryCreateArgs:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+
+    CategoryUpdateArgs:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        sort:
+          type: integer
+          nullable: true
+
+    CategoryReorderArgs:
+      type: object
+      required: [orderedIds]
+      properties:
+        orderedIds:
+          type: array
+          items:
+            type: string
+          description: 拖拽后的分类 id 顺序
+
+    BookmarksImportArgs:
+      type: object
+      required: [path]
+      properties:
+        path:
+          type: string
+          description: 书签 HTML 文件绝对路径（dialog 选择返回）
+
+    ImportJsonArgs:
+      type: object
+      required: [path]
+      properties:
+        path:
+          type: string
+          description: 备份 JSON 文件绝对路径（dialog 选择返回）
+
+    FetchMetaArgs:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+
+    DragResolveArgs:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: >
+            混合输入：.html/.url 文件路径、http(s) 直链、或 text/uri-list 行。
+            Rust resolve_dropped 统一解析为 UrlDraft。

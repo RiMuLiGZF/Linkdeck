@@ -1,0 +1,30 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "url-launcher 最小权限能力集（Windows）。自定义命令无需条目，仅插件命令需显式授权。",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:event:allow-listen",
+
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled",
+
+    "dialog:allow-open",
+
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "**" },
+        { "url": "**", "app": "chrome" },
+        { "url": "**", "app": "msedge" },
+        { "url": "**", "app": "firefox" },
+        { "url": "**", "app": true }
+      ]
+    }
+  ]
+}

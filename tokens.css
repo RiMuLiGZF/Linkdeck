@@ -1,0 +1,99 @@
+/* url-launcher Design Tokens — 四层 Token 架构 (A1 / A2 / B-slot / C-extension) */
+/* 浅色为主（默认主题）。所有颜色经 Token 引用，组件禁止裸 hex。 */
+
+:root {
+  /* ===== A1-identity（品牌核心，不可省略） ===== */
+  --bg: #F3F4F6;
+  --surface: #FFFFFF;
+  --surface-warm: #F5F6F8;
+  --fg: #1B1D23;
+  --fg-2: #3C3F47;
+  --muted: #6B7280;
+  --meta: #9AA0A8;
+  --accent: #3B5BDB;        /* 刻意调离 Tailwind #6366F1，偏墨蓝 */
+  --accent-on: #FFFFFF;
+  --border: #E6E8EC;
+  --border-soft: #F0F1F4;
+
+  /* ===== A2（有默认值） ===== */
+  --accent-hover: #2F4BC4;
+  --accent-active: #283FA8;
+  --success: #1F9D55;
+  --warn: #C2810B;
+  --danger: #E5484D;
+  --font-display: "Inter", "Noto Sans SC", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Noto Sans SC", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ===== Type scale（适配紧凑浮窗） ===== */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 32px;
+  --leading-body: 1.5;
+  --leading-tight: 1.25;
+  --tracking-display: -0.01em;
+  --tracking-caps: 0.06em;
+
+  /* ===== Spacing（4px 网格） ===== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* ===== Radius ===== */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  /* ===== Elevation（浮窗浮于桌面，允许真实投影） ===== */
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 12px 40px rgba(17, 24, 39, 0.16), 0 2px 8px rgba(17, 24, 39, 0.08);
+
+  /* ===== Focus & Motion ===== */
+  --focus-ring: 0 0 0 3px rgba(59, 91, 219, 0.32);
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ===== Layout（浮窗参数） ===== */
+  --panel-w: 520px;
+  --panel-max-h: 88vh;
+  --panel-radius: 16px;
+  --sidebar-w: 168px;
+  --row-min-h: 44px;
+  --anchor-top: 16px;
+  --anchor-right: 16px;
+}
+
+/* 次要主题：深色覆盖（建议二期） */
+:root[data-theme="dark"] {
+  --bg: #0D1117;
+  --surface: #161B22;
+  --surface-warm: #21262D;
+  --fg: #F0F6FC;
+  --fg-2: #D0D6E0;
+  --muted: #8B949E;
+  --meta: #6E7681;
+  --accent: #5B7CFA;
+  --accent-on: #FFFFFF;
+  --accent-hover: #6E8BFF;
+  --accent-active: #4A6AE8;
+  --border: #30363D;
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --success: #3FB950;
+  --warn: #D29922;
+  --danger: #F85149;
+  --elev-raised: 0 12px 40px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --focus-ring: 0 0 0 3px rgba(91, 124, 250, 0.4);
+}

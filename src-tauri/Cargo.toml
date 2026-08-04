@@ -1,0 +1,32 @@
+[package]
+name = "url-launcher"
+version = "0.1.0"
+description = "Windows desktop URL launcher (Tauri 2)"
+authors = ["url-launcher team"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "url_launcher_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.5", features = ["tray-icon", "menu", "image-png"] }
+tauri-plugin-global-shortcut = "2.3.2"
+tauri-plugin-opener = "2.5.2"
+tauri-plugin-autostart = "2.5.1"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+reqwest = { version = "0.12", features = ["json", "gzip", "brotli", "deflate"] }
+scraper = "0.20"
+tokio = { version = "1", features = ["full"] }
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+sha1 = "0.10"
+regex = "1"

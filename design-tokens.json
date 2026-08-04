@@ -1,0 +1,85 @@
+{
+  "color": {
+    "bg": { "value": "#F3F4F6", "type": "color" },
+    "surface": { "value": "#FFFFFF", "type": "color" },
+    "surface-warm": { "value": "#F5F6F8", "type": "color" },
+    "fg": { "value": "#1B1D23", "type": "color" },
+    "fg-2": { "value": "#3C3F47", "type": "color" },
+    "muted": { "value": "#6B7280", "type": "color" },
+    "meta": { "value": "#9AA0A8", "type": "color" },
+    "accent": { "value": "#3B5BDB", "type": "color" },
+    "accent-on": { "value": "#FFFFFF", "type": "color" },
+    "accent-hover": { "value": "#2F4BC4", "type": "color" },
+    "accent-active": { "value": "#283FA8", "type": "color" },
+    "border": { "value": "#E6E8EC", "type": "color" },
+    "border-soft": { "value": "#F0F1F4", "type": "color" },
+    "success": { "value": "#1F9D55", "type": "color" },
+    "warn": { "value": "#C2810B", "type": "color" },
+    "danger": { "value": "#E5484D", "type": "color" }
+  },
+  "font": {
+    "family": {
+      "display": { "value": "Inter, Noto Sans SC, -apple-system, 'Segoe UI', system-ui, sans-serif", "type": "fontFamily" },
+      "body": { "value": "Inter, Noto Sans SC, -apple-system, 'Segoe UI', system-ui, sans-serif", "type": "fontFamily" },
+      "mono": { "value": "JetBrains Mono, Geist Mono, ui-monospace, 'SF Mono', Menlo, monospace", "type": "fontFamily" }
+    },
+    "size": {
+      "xs": { "value": "12px", "type": "dimension" },
+      "sm": { "value": "13px", "type": "dimension" },
+      "base": { "value": "14px", "type": "dimension" },
+      "lg": { "value": "16px", "type": "dimension" },
+      "xl": { "value": "18px", "type": "dimension" },
+      "2xl": { "value": "20px", "type": "dimension" },
+      "3xl": { "value": "24px", "type": "dimension" },
+      "4xl": { "value": "32px", "type": "dimension" }
+    },
+    "leading": {
+      "body": { "value": "1.5", "type": "number" },
+      "tight": { "value": "1.25", "type": "number" }
+    },
+    "tracking": {
+      "display": { "value": "-0.01em", "type": "dimension" },
+      "caps": { "value": "0.06em", "type": "dimension" }
+    },
+    "weight": {
+      "read": { "value": "400", "type": "fontWeight" },
+      "emphasize": { "value": "510", "type": "fontWeight" },
+      "announce": { "value": "590", "type": "fontWeight" }
+    }
+  },
+  "radius": {
+    "sm": { "value": "8px", "type": "dimension" },
+    "md": { "value": "12px", "type": "dimension" },
+    "lg": { "value": "16px", "type": "dimension" },
+    "pill": { "value": "9999px", "type": "dimension" }
+  },
+  "space": {
+    "1": { "value": "4px", "type": "dimension" },
+    "2": { "value": "8px", "type": "dimension" },
+    "3": { "value": "12px", "type": "dimension" },
+    "4": { "value": "16px", "type": "dimension" },
+    "5": { "value": "20px", "type": "dimension" },
+    "6": { "value": "24px", "type": "dimension" },
+    "8": { "value": "32px", "type": "dimension" },
+    "12": { "value": "48px", "type": "dimension" }
+  },
+  "shadow": {
+    "raised": { "value": "0 12px 40px rgba(17,24,39,0.16), 0 2px 8px rgba(17,24,39,0.08)", "type": "boxShadow" },
+    "ring": { "value": "0 0 0 1px #E6E8EC", "type": "boxShadow" }
+  },
+  "layout": {
+    "panel-w": { "value": "520px", "type": "dimension" },
+    "panel-max-h": { "value": "88vh", "type": "dimension" },
+    "panel-radius": { "value": "16px", "type": "dimension" },
+    "sidebar-w": { "value": "168px", "type": "dimension" },
+    "row-min-h": { "value": "44px", "type": "dimension" },
+    "anchor-top": { "value": "16px", "type": "dimension" },
+    "anchor-right": { "value": "16px", "type": "dimension" }
+  },
+  "motion": {
+    "fast": { "value": "150ms", "type": "duration" },
+    "base": { "value": "200ms", "type": "duration" },
+    "ease": { "value": "cubic-bezier(0.2, 0, 0, 1)", "type": "cubicBezier" },
+    "focus-ring": { "value": "0 0 0 3px rgba(59,91,219,0.32)", "type": "boxShadow" }
+  }
+}
