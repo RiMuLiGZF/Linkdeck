@@ -135,7 +135,7 @@ pub fn create(
     })
 }
 
-/// 更新链接。仅传入非空的字段被改写（COALESCE 保留旧值），所有值参数化绑定。
+/// 更新链接。所有字段直接赋值（允许设为 NULL），所有值参数化绑定。
 pub fn update(
     conn: &Connection,
     id: &str,
@@ -145,9 +145,9 @@ pub fn update(
 ) -> Result<Url, AppError> {
     conn.execute(
         "UPDATE links SET \
-         title = COALESCE(:title, title), \
-         category_id = COALESCE(:category_id, category_id), \
-         note = COALESCE(:note, note) \
+         title = :title, \
+         category_id = :category_id, \
+         note = :note \
          WHERE id = :id",
         named_params! {
             ":title": title,

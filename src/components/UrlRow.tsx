@@ -1,8 +1,8 @@
 // 单行网址（DESIGN-PAGES §1.4）。favicon 三态：loading(loader 旋转) / ok(img) / error(monogram)。
 // 悬浮操作组默认隐藏，hover/focus-within 显现。
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
-import { getFaviconSrc, getInitial } from '../lib/favicon';
+import { getFaviconFallbacks, getInitial } from '../lib/favicon';
 import type { Url } from '../types/models';
 
 export interface UrlRowProps {
@@ -29,8 +29,21 @@ export function UrlRow({
   onDelete,
 }: UrlRowProps) {
   const [fav, setFav] = useState<FavState>('loading');
-  const favSrc = getFaviconSrc(item.url, item.faviconPath);
+  const fallbacks = useMemo(() => getFaviconFallbacks(item.url, item.faviconPath), [item.url, item.faviconPath]);
+  const fallbackIdx = useRef(0);
+  const [favSrc, setFavSrc] = useState(fallbacks[0]);
   const displayTitle = item.title?.trim() || item.url;
+
+  const handleError = () => {
+    if (fallbackIdx.current < fallbacks.length - 1) {
+      // 尝试下一个备选源
+      fallbackIdx.current += 1;
+      setFavSrc(fallbacks[fallbackIdx.current]);
+    } else {
+      // 所有源都失败，显示 monogram
+      setFav('error');
+    }
+  };
 
   return (
     <div
@@ -59,7 +72,7 @@ export function UrlRow({
           loading="lazy"
           style={{ display: fav === 'ok' ? undefined : 'none' }}
           onLoad={() => setFav('ok')}
-          onError={() => setFav('error')}
+          onError={handleError}
         />
       </div>
 

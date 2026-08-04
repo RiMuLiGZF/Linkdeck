@@ -1,6 +1,7 @@
 // 浮窗容器（DESIGN-PAGES §1）。组装 Header / Body(Sidebar+List) / Footer + 拖入遮罩。
 // 直接消费 useUrlStore，避免 prop 透传；searchRef 与 isDragging 由 App 提供。
 import { type RefObject } from 'react';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { Icon } from './Icon';
 import { SearchBar } from './SearchBar';
 import { CategorySidebar } from './CategorySidebar';
@@ -28,6 +29,7 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
   const setSelectedIndex = useUrlStore((s) => s.setSelectedIndex);
   const openItem = useUrlStore((s) => s.openItem);
   const requestEdit = useUrlStore((s) => s.requestEdit);
+  const requestAddPrefill = useUrlStore((s) => s.requestAddPrefill);
   const deleteUrl = useUrlStore((s) => s.deleteUrl);
   const openModal = useUrlStore((s) => s.openModal);
   const setVisible = useUrlStore((s) => s.setVisible);
@@ -39,6 +41,13 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
   const clearSearch = () => {
     setQuery('');
     applyDebounced('');
+  };
+
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm('确定要删除这个网址吗？', { title: '删除确认', kind: 'warning' });
+    if (confirmed) {
+      await deleteUrl(id);
+    }
   };
 
   return (
@@ -80,10 +89,11 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
           onSelect={setSelectedIndex}
           onEdit={(item) => requestEdit(item)}
           onCopy={handleCopy}
-          onDelete={(id) => deleteUrl(id)}
+          onDelete={handleDelete}
           onClearSearch={clearSearch}
           onAdd={() => openModal('add')}
           onImport={() => openModal('import')}
+          onAddWithQuery={(q) => requestAddPrefill(q)}
         />
       </div>
 

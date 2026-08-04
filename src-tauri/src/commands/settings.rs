@@ -33,8 +33,13 @@ pub async fn settings_set(
         autostart,
     };
 
-    let old = settings_repo::get(&state.db.lock().unwrap())?;
-    settings_repo::set(&state.db.lock().unwrap(), &new_settings)?;
+    // 单锁完成读-改-写，避免双锁竞态
+    let old = {
+        let guard = state.db.lock().unwrap();
+        let old = settings_repo::get(&guard)?;
+        settings_repo::set(&guard, &new_settings)?;
+        old
+    };
 
     // 快捷键变更：注销旧的、注册新的
     if old.hotkey != new_settings.hotkey {

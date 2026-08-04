@@ -90,8 +90,7 @@ fn read_internet_shortcut(path: &str) -> Option<String> {
 fn parse_bookmark_urls(html: &str) -> Vec<(String, Option<String>)> {
     let mut out = Vec::new();
     // 匹配 <A ... HREF="url" ...>title</A>
-    let re = regex_lazy();
-    for cap in re.captures_iter(html) {
+    for cap in BOOKMARK_RE.captures_iter(html) {
         if let Some(m) = cap.name("url") {
             let url = m.as_str().trim();
             if is_safe_web(url) {
@@ -103,13 +102,13 @@ fn parse_bookmark_urls(html: &str) -> Vec<(String, Option<String>)> {
     out
 }
 
-// 轻量正则（避免引入额外 crate 依赖；如已依赖 regex 可直接复用）。
-fn regex_lazy() -> regex::Regex {
+/// 静态编译正则，避免每次调用都重新编译。
+static BOOKMARK_RE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| {
     regex::Regex::new(
         r#"(?i)<a\b[^>]*\bhref\s*=\s*["'](?P<url>[^"']+)["'][^>]*>(?P<title>.*?)</a>"#,
     )
     .expect("static regex")
-}
+});
 
 // ===========================================================================
 // on_drag_drop 事件处理参考（Rust 窗口事件侧，非 invoke 命令）

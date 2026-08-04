@@ -19,6 +19,8 @@ export interface UrlListProps {
   onClearSearch: () => void;
   onAdd: () => void;
   onImport: () => void;
+  /** 搜索无匹配时，用当前搜索词预填添加对话框 */
+  onAddWithQuery: (q: string) => void;
 }
 
 const ROW_HEIGHT = 44;
@@ -36,6 +38,7 @@ export function UrlList({
   onClearSearch,
   onAdd,
   onImport,
+  onAddWithQuery,
 }: UrlListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +65,7 @@ export function UrlList({
   if (urls.length === 0) {
     return (
       <div className="url-list url-list--empty">
-        <EmptyState query={query} onClearSearch={onClearSearch} onAdd={onAdd} onImport={onImport} />
+        <EmptyState query={query} onClearSearch={onClearSearch} onAdd={onAdd} onImport={onImport} onAddWithQuery={onAddWithQuery} />
       </div>
     );
   }

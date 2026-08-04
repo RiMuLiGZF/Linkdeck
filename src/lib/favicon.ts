@@ -20,10 +20,23 @@ export function getInitial(url: string): string {
 /**
  * 取 favicon 图片源：
  * - 有本地缓存（faviconPath）→ 走 asset:// 协议（需 capabilities 授予 asset:default）
- * - 否则在线取 Google s2 favicons（按域名），离线/失败由 <img> onError 降级 monogram
+ * - 否则返回在线源列表（Google → DuckDuckGo），离线/失败由 <img> onError 降级 monogram
  */
 export function getFaviconSrc(url: string, faviconPath?: string | null): string {
   if (faviconPath) return toAssetUrl(faviconPath);
   const host = getDomain(url);
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`;
+}
+
+/**
+ * 获取 favicon 备选源列表（用于降级链）。
+ * 顺序：Google → DuckDuckGo
+ */
+export function getFaviconFallbacks(url: string, faviconPath?: string | null): string[] {
+  if (faviconPath) return [toAssetUrl(faviconPath)];
+  const host = getDomain(url);
+  return [
+    `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`,
+    `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`,
+  ];
 }

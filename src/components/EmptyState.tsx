@@ -6,17 +6,30 @@ export interface EmptyStateProps {
   onClearSearch: () => void;
   onAdd: () => void;
   onImport: () => void;
+  /** 搜索无匹配时，用当前搜索词预填添加对话框 */
+  onAddWithQuery: (q: string) => void;
 }
 
-export function EmptyState({ query, onClearSearch, onAdd, onImport }: EmptyStateProps) {
+const URL_LIKE = /^https?:\/\/.+/i;
+
+export function EmptyState({ query, onClearSearch, onAdd, onImport, onAddWithQuery }: EmptyStateProps) {
   if (query) {
+    const looksLikeUrl = URL_LIKE.test(query.trim());
     // 无匹配态
     return (
       <div className="empty empty--nomatch">
         <p className="empty__nomatch-text">没有匹配的网址</p>
-        <button type="button" className="ghost-btn" onClick={onClearSearch}>
-          清除搜索
-        </button>
+        <div className="empty__actions">
+          {looksLikeUrl && (
+            <button type="button" className="btn btn--primary" onClick={() => onAddWithQuery(query.trim())}>
+              <Icon name="plus" size={20} />
+              <span>添加 &ldquo;{query.trim()}&rdquo;</span>
+            </button>
+          )}
+          <button type="button" className="ghost-btn" onClick={onClearSearch}>
+            清除搜索
+          </button>
+        </div>
       </div>
     );
   }

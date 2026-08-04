@@ -1,7 +1,8 @@
 // 设置（DESIGN-PAGES §4）。快捷键录制（对齐 shortcut.rs 拒绝清单）、浏览器选择、
 // 开机自启开关、数据 JSON 导入导出。
 import { useEffect, useState } from 'react';
-import { open } from '@tauri-apps/plugin-dialog';
+import { open, save as saveDialog } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { Modal } from './Modal';
 import { Icon } from './Icon';
 import { useSettingsStore } from '../stores/useSettingsStore';
@@ -97,7 +98,6 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
   const exportJson = async () => {
     try {
       const list = await urlsList({ limit: 5000 });
-      // 带上分类清单，使导入端可按名称跨库还原归属（与后端 import_json 的完整备份形态对齐）
       const { categories } = useUrlStore.getState();
       const payload = {
         version: 1,
@@ -105,12 +105,13 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
         categories: categories.map((c) => ({ id: c.id, name: c.name })),
         links: list,
       };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'links.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const content = JSON.stringify(payload, null, 2);
+      const filePath = await saveDialog({
+        defaultPath: 'links.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (!filePath) return;
+      await writeTextFile(filePath, content);
     } catch {
       /* 忽略导出失败 */
     }

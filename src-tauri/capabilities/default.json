@@ -15,6 +15,10 @@
     "autostart:allow-is-enabled",
 
     "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-confirm",
+
+    "fs:allow-write-text-file",
 
     {
       "identifier": "opener:allow-open-url",
