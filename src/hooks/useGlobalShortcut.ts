@@ -9,12 +9,12 @@ import { listen } from '@tauri-apps/api/event';
  * 监听 Rust 端 panel:toggle 事件，同步面板可见性。
  * Rust 是全局快捷键的唯一注册者；前端只消费事件。
  */
-export function useGlobalShortcut(_hotkey: string, onToggle: () => void): void {
+export function useGlobalShortcut(_hotkey: string, onToggle: (visible: boolean) => void): void {
   useEffect(() => {
     // 监听 Rust 端托盘/快捷键触发的面板切换事件
-    const unlistenPromise = listen<boolean>('panel:toggle', () => {
+    const unlistenPromise = listen<boolean>('panel:toggle', (event) => {
       // Rust 端切换面板时触发，前端同步 visible 状态
-      onToggle();
+      onToggle(event.payload);
     });
 
     return () => {

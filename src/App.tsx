@@ -18,7 +18,6 @@ export default function App() {
 
   const visible = useUrlStore((s) => s.visible);
   const setVisible = useUrlStore((s) => s.setVisible);
-  const toggleVisible = useUrlStore((s) => s.toggleVisible);
   const query = useUrlStore((s) => s.query);
   const applyDebounced = useUrlStore((s) => s.applyDebounced);
   const move = useUrlStore((s) => s.move);
@@ -37,7 +36,7 @@ export default function App() {
   }, []);
 
   // 全局快捷键（注册/监听）
-  useGlobalShortcut(hotkey, toggleVisible);
+  useGlobalShortcut(hotkey, setVisible);
 
   // 搜索防抖 120ms
   useDebouncedSearch(query, 120, applyDebounced);

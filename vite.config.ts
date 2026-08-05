@@ -10,6 +10,9 @@ export default defineConfig({
     port: 1420,
     strictPort: true,
     host: 'localhost',
+    watch: {
+      ignored: ['**/src-tauri/target/**'],
+    },
   },
   build: {
     // Tauri 默认 frontendDist 为 ../dist
