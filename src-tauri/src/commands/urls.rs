@@ -27,7 +27,7 @@ pub async fn urls_list(
 #[tauri::command]
 pub async fn url_create(
     state: State<'_, AppState>,
-    app: AppHandle,
+    _app: AppHandle,
     url: String,
     title: Option<String>,
     category_id: Option<String>,

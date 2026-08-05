@@ -5,9 +5,8 @@
 
 use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::{
-    image::Image,
-    tray::{TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, MouseButton,
+    tray::{TrayIconBuilder, TrayIconEvent, MouseButton},
+    AppHandle, Emitter,
 };
 
 use crate::error::AppError;
@@ -27,7 +26,7 @@ pub fn build_tray(app: &AppHandle) -> Result<(), AppError> {
     let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)
         .map_err(|e| AppError::Io(e.to_string()))?;
 
-    let items: Vec<&dyn IsMenuItem> = vec![&show_item, &settings_item, &separator, &quit_item];
+    let items: Vec<&dyn IsMenuItem<tauri::Wry>> = vec![&show_item, &settings_item, &separator, &quit_item];
     let menu = Menu::with_items(app, &items).map_err(|e| AppError::Io(e.to_string()))?;
 
     // 左键处理器需要拥有的 AppHandle（闭包要求 'static）

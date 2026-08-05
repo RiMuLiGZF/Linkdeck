@@ -9,5 +9,6 @@ pub mod categories;
 pub mod data;
 pub mod drag;
 pub mod fetch;
+pub mod panel;
 pub mod settings;
 pub mod urls;

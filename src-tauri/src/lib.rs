@@ -23,7 +23,6 @@ use tokio::sync::Semaphore;
 
 use crate::db::repositories::settings_repo;
 use crate::error::AppError;
-use crate::models::UrlDraft;
 use crate::state::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -69,7 +68,8 @@ pub fn run() {
 
             // 7. 注册默认全局快捷键（读设置中的 hotkey，默认 Alt+Space）
             {
-                let db = app_handle.state::<AppState>().db.lock().unwrap();
+                let state = app_handle.state::<AppState>();
+                let db = state.db.lock().unwrap();
                 let hotkey = settings_repo::get(&db)
                     .map(|s| s.hotkey)
                     .unwrap_or_else(|_| "Alt+Space".to_string());
@@ -78,7 +78,8 @@ pub fn run() {
 
             // 8. 自启初始化：若设置开启则启用
             {
-                let db = app_handle.state::<AppState>().db.lock().unwrap();
+                let state = app_handle.state::<AppState>();
+                let db = state.db.lock().unwrap();
                 if let Ok(s) = settings_repo::get(&db) {
                     if s.autostart {
                         let _ = apply_autostart(&app_handle, true);
@@ -93,11 +94,10 @@ pub fn run() {
             let app_for_event = app_handle.clone();
             window.on_window_event(move |event: &tauri::WindowEvent| {
                 if let tauri::WindowEvent::DragDrop(d) = event {
-                    if let tauri::DragDropEvent::Drop { paths, uris, .. } = d {
+                    if let tauri::DragDropEvent::Drop { paths, .. } = d {
                         let items: Vec<String> = paths
                             .iter()
                             .map(|p| p.to_string_lossy().to_string())
-                            .chain(uris.iter().cloned())
                             .collect();
                         if let Ok(drafts) = crate::dragdrop::resolve_dropped(items) {
                             if !drafts.is_empty() {
@@ -134,9 +134,9 @@ pub fn run() {
             commands::autostart::autostart_enable,
             commands::autostart::autostart_disable,
             commands::autostart::autostart_is_enabled,
-            // 面板 / 拖拽（定义于本文件）
-            panel_toggle,
-            drag_resolve,
+            // 面板 / 拖拽
+            commands::panel::panel_toggle,
+            commands::drag::drag_resolve,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -145,18 +145,19 @@ pub fn run() {
 /// 切换面板可见性：可见→隐藏并广播 false；不可见→重新锚定右上、显示、聚焦并广播 true。
 /// 经 run_on_main_thread 派发，确保窗口操作在主线程执行（全局快捷键回调来自独立线程）。
 pub fn toggle_panel(app: &AppHandle) {
-    let app = app.clone();
-    let _ = app.run_on_main_thread(move || {
-        if let Some(window) = app.get_webview_window("main") {
+    let app_for_call = app.clone();
+    let app_for_closure = app.clone();
+    let _ = app_for_call.run_on_main_thread(move || {
+        if let Some(window) = app_for_closure.get_webview_window("main") {
             let visible = window.is_visible().unwrap_or(false);
             if visible {
                 let _ = window.hide();
-                let _ = app.emit("panel:toggle", false);
+                let _ = app_for_closure.emit("panel:toggle", false);
             } else {
                 anchor_top_right(&window);
                 let _ = window.show();
                 let _ = window.set_focus();
-                let _ = app.emit("panel:toggle", true);
+                let _ = app_for_closure.emit("panel:toggle", true);
             }
         }
     });
@@ -202,16 +203,4 @@ pub fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), AppError> {
         m.disable()
             .map_err(|e| AppError::Io(format!("disable autostart failed: {e}")))
     }
-}
-
-/// 供前端按钮/命令行唤出面板，语义同托盘左键（settings 不调用，纯前端入口）。
-#[tauri::command]
-pub fn panel_toggle(app: AppHandle) {
-    toggle_panel(&app);
-}
-
-/// 拖拽通道 B：前端 HTML5 drop 取到 text/uri-list 后 invoke，复用 resolve_dropped 保证一致。
-#[tauri::command]
-pub async fn drag_resolve(items: Vec<String>) -> Result<Vec<UrlDraft>, AppError> {
-    crate::dragdrop::resolve_dropped(items)
 }

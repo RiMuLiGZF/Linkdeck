@@ -57,7 +57,7 @@ pub fn list(
     limit: i64,
 ) -> Result<Vec<Url>, AppError> {
     // 仅拼接静态 SQL 片段；用户数据一律通过 :like / :category_id / :limit 绑定。
-    let mut sql = String::from(
+    let sql = String::from(
         "SELECT l.id, l.title, l.url, l.category_id, l.note, l.favicon_path, l.created_at \
          FROM links l LEFT JOIN categories c ON l.category_id = c.id \
          WHERE (:category_id IS NULL OR l.category_id = :category_id) \
@@ -84,8 +84,8 @@ pub fn list(
         _ => "%".to_string(),
     };
 
-    let rows = conn.query_map(
-        &sql,
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(
         named_params! {
             ":category_id": category_id,
             ":search": search,

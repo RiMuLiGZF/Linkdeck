@@ -41,13 +41,12 @@ pub fn get(conn: &Connection, id: &str) -> Result<Option<Category>, AppError> {
 
 /// 列出全部分类，附带每个分类下的链接计数，按 sort 升序。
 pub fn list(conn: &Connection) -> Result<Vec<Category>, AppError> {
-    let rows = conn.query_map(
+    let mut stmt = conn.prepare(
         "SELECT c.id, c.name, c.sort, c.color, c.icon, c.created_at, \
                 (SELECT COUNT(*) FROM links l WHERE l.category_id = c.id) AS count \
          FROM categories c ORDER BY c.sort ASC, c.created_at ASC",
-        [],
-        row_to_category,
     )?;
+    let rows = stmt.query_map([], row_to_category)?;
     let mut out = Vec::new();
     for r in rows {
         out.push(r?);

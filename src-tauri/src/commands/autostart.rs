@@ -1,6 +1,6 @@
 //! commands/autostart.rs — 开机自启命令（包装 autostart 插件并同步设置）。
 
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::db::repositories::settings_repo;
