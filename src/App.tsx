@@ -1,6 +1,5 @@
 // 应用根：装配面板 + 模态，串联全局快捷键、窗口显隐、键盘导航与拖拽。
 import { useEffect, useRef, useState } from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { LauncherPanel } from './components/LauncherPanel';
 import { AddUrlDialog } from './components/AddUrlDialog';
 import { ImportDialog } from './components/ImportDialog';
@@ -53,16 +52,10 @@ export default function App() {
   });
   useEffect(() => setIsDragging(dragging), [dragging]);
 
-  // 窗口显隐：visible 变化时 show/hide + 聚焦搜索框
+  // 窗口显隐由 Rust 端控制，前端只负责聚焦搜索框
   useEffect(() => {
-    const w = getCurrentWindow();
     if (visible) {
-      w.show()
-        .then(() => w.setFocus())
-        .catch(() => {});
       searchRef.current?.focus();
-    } else {
-      w.hide().catch(() => {});
     }
   }, [visible]);
 
