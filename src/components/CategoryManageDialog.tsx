@@ -52,6 +52,9 @@ export function CategoryManageDialog({ onClose }: CategoryManageDialogProps) {
   };
 
   const handleDelete = async (cat: Category) => {
+    if (!window.confirm(`确定要删除分类「${cat.name}」吗？其下的书签将被移入「未分类」。`)) {
+      return;
+    }
     setError(null);
     try {
       const { categoryDelete } = await import('../services/categories');

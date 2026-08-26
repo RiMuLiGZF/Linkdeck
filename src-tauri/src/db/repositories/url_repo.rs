@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::error::AppError;
 use crate::models::Url;
+use crate::normalize;
 
 /// 行映射：links 列 -> Url（favicon_path 存绝对路径，原样返回）。
 fn row_to_url(row: &Row) -> Result<Url, rusqlite::Error> {
@@ -34,12 +35,15 @@ pub fn list_all_urls(conn: &Connection) -> Result<Vec<String>, AppError> {
     Ok(out)
 }
 
-/// 规范化去重：与已有链接的规范化形式比较。
+/// 规范化去重：通过 normalized_url 唯一索引做 O(1) 查找。
 /// 使 https://a.com 与 https://a.com/ 视为同一条。
 pub fn exists_normalized(conn: &Connection, normalized: &str) -> bool {
-    list_all_urls(conn)
-        .map(|urls| urls.iter().any(|u| crate::normalize::normalize_url(u) == normalized))
-        .unwrap_or(false)
+    conn.query_row(
+        "SELECT id FROM links WHERE normalized_url = :norm LIMIT 1",
+        named_params! { ":norm": normalized },
+        |_| Ok(()),
+    )
+    .is_ok()
 }
 
 /// 按 id 查询单条（不存在返回 None）。
@@ -121,15 +125,17 @@ pub fn create(
 ) -> Result<Url, AppError> {
     let id = Uuid::new_v4().to_string();
     let created_at = Utc::now().to_rfc3339();
+    let normalized_url = normalize::normalize_url(url);
     conn.execute(
-        "INSERT INTO links (id, title, url, category_id, note, favicon_path, created_at) \
-         VALUES (:id, :title, :url, :category_id, :note, NULL, :created_at)",
+        "INSERT INTO links (id, title, url, category_id, note, favicon_path, normalized_url, created_at) \
+         VALUES (:id, :title, :url, :category_id, :note, NULL, :normalized_url, :created_at)",
         named_params! {
             ":id": id,
             ":title": title,
             ":url": url,
             ":category_id": category_id,
             ":note": note,
+            ":normalized_url": normalized_url,
             ":created_at": created_at,
         },
     )?;

@@ -16,14 +16,18 @@ CREATE TABLE IF NOT EXISTS categories (
 
 -- 链接表
 CREATE TABLE IF NOT EXISTS links (
-    id            TEXT    NOT NULL PRIMARY KEY,  -- uuid
-    title         TEXT,                          -- 可空（缺省回退 url）
-    url           TEXT    NOT NULL,              -- 唯一业务键，应用层去重
-    category_id   TEXT,                          -- 可空（NULL = 未分类）
-    note          TEXT,                          -- 可空
-    favicon_path  TEXT,                          -- 可空；值形如 favicons/{sha1(url)}.png
-    created_at    TEXT    NOT NULL               -- ISO8601
+    id              TEXT    NOT NULL PRIMARY KEY,  -- uuid
+    title           TEXT,                          -- 可空（缺省回退 url）
+    url             TEXT    NOT NULL,              -- 唯一业务键，应用层去重
+    category_id     TEXT,                          -- 可空（NULL = 未分类）
+    note            TEXT,                          -- 可空
+    favicon_path    TEXT,                          -- 可空；值形如 favicons/{sha1(url)}.png
+    normalized_url  TEXT,                          -- 规范化 URL，用于 O(1) 去重；由应用层写入
+    created_at      TEXT    NOT NULL               -- ISO8601
 );
+
+-- 规范化 URL 唯一索引：使 exists_normalized 从 O(n) 降为 O(1)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_links_normalized_url ON links(normalized_url);
 
 -- KV 设置表：key/value。Settings 结构视图在应用层拆装。
 CREATE TABLE IF NOT EXISTS settings (

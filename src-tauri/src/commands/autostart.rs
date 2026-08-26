@@ -11,9 +11,10 @@ use crate::state::AppState;
 pub async fn autostart_enable(app: AppHandle) -> Result<(), AppError> {
     crate::apply_autostart(&app, true)?;
     let st = app.state::<AppState>();
-    let mut s = settings_repo::get(&st.db.lock().unwrap())?;
+    let lock = st.db.lock().unwrap();
+    let mut s = settings_repo::get(&lock)?;
     s.autostart = true;
-    settings_repo::set(&st.db.lock().unwrap(), &s)?;
+    settings_repo::set(&lock, &s)?;
     Ok(())
 }
 
@@ -21,9 +22,10 @@ pub async fn autostart_enable(app: AppHandle) -> Result<(), AppError> {
 pub async fn autostart_disable(app: AppHandle) -> Result<(), AppError> {
     crate::apply_autostart(&app, false)?;
     let st = app.state::<AppState>();
-    let mut s = settings_repo::get(&st.db.lock().unwrap())?;
+    let lock = st.db.lock().unwrap();
+    let mut s = settings_repo::get(&lock)?;
     s.autostart = false;
-    settings_repo::set(&st.db.lock().unwrap(), &s)?;
+    settings_repo::set(&lock, &s)?;
     Ok(())
 }
 
