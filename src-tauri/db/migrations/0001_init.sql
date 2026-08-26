@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS links (
     created_at      TEXT    NOT NULL               -- ISO8601
 );
 
--- 规范化 URL 唯一索引：使 exists_normalized 从 O(n) 降为 O(1)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_links_normalized_url ON links(normalized_url);
+-- 规范化 URL 唯一索引在连接层（connection.rs open()）回填/去重后统一创建：
+-- 先回填 normalized_url 再建唯一索引，避免 UNIQUE 约束阻止批量 UPDATE，也使旧库迁移不因缺列失败。
 
 -- KV 设置表：key/value。Settings 结构视图在应用层拆装。
 CREATE TABLE IF NOT EXISTS settings (

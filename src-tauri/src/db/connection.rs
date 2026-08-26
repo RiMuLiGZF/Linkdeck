@@ -19,12 +19,16 @@ pub fn open(app_data_dir: &Path) -> Result<Connection, AppError> {
     conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;")
         .map_err(|e| AppError::Sqlite(e.to_string()))?;
 
+    // 兼容已有数据库：normalized_url / start_date / end_date 是后续版本新增列，
+    // 旧库缺少这些列时迁移中的建表/索引语句会因列不存在而失败，必须先补齐再执行迁移。
+    // 全新库此刻尚无表，ALTER 报 no such table，静默忽略即可。
+    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN normalized_url TEXT;");
+    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN start_date TEXT;");
+    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN end_date TEXT;");
+
     let migration = include_str!("../../db/migrations/0001_init.sql");
     conn.execute_batch(migration)
         .map_err(|e| AppError::Sqlite(format!("迁移执行失败: {e}")))?;
-
-    // 兼容已有数据库：normalized_url 列在 v2 迁移中添加，旧库无此列，静默忽略重复列错误
-    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN normalized_url TEXT;");
 
     // 回填已有行的 normalized_url（仅首次迁移时需要）
     backfill_normalized_url(&conn)?;
@@ -36,10 +40,6 @@ pub fn open(app_data_dir: &Path) -> Result<Connection, AppError> {
     conn.execute_batch(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_links_normalized_url ON links(normalized_url);"
     )?;
-
-    // 兼容已有数据库：start_date / end_date 列在比赛管理功能中添加
-    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN start_date TEXT;");
-    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN end_date TEXT;");
 
     // 首次启动写入默认设置（hotkey=Ctrl+Alt+Space 等），保证 settings 行存在。
     crate::db::repositories::settings_repo::ensure_defaults(&conn)?;
