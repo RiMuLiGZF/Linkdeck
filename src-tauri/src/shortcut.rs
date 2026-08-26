@@ -7,7 +7,7 @@
 //! - `validate_shortcut(combo: &str) -> Result<(), ShortcutError>`
 //! - 前端录制时组装 'Mod+Key' 字符串（见下方 `FRONTEND_RECORDING` 约定），
 //!   调用本函数（经由 settings_set 前的校验命令，或直接复用本逻辑）确认合法后才持久化。
-//! - 合法组合示例："Alt+Space"（默认）、"Ctrl+Shift+K"、"Alt+D"。
+//! - 合法组合示例："Ctrl+Alt+Space"（默认）、"Ctrl+Shift+K"、"Alt+D"。
 //! - 合法修饰符：Alt / Ctrl / Shift / Super（单键组合需至少含一个修饰符，纯字母键不允许）。
 
 use serde::Serialize;
@@ -60,7 +60,7 @@ const RESERVED_COMBOS: &[&str] = &[
 /// 修饰符白名单（大小写不敏感）。
 const MODIFIERS: &[&str] = &["alt", "ctrl", "control", "shift", "super", "meta", "cmd", "win"];
 
-/// 校验快捷键组合字符串（如 "Alt+Space"）。
+/// 校验快捷键组合字符串（如 "Ctrl+Alt+Space"）。
 ///
 /// 返回 `Ok(())` 表示可安全注册；否则 `Err(ShortcutError)`。
 pub fn validate_shortcut(combo: &str) -> Result<(), ShortcutError> {

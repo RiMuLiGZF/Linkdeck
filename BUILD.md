@@ -68,7 +68,7 @@ npm run tauri dev
 2. 编译 Rust 后端并启动 WebView2 窗口
 3. 右上角出现无边框浮窗「网址板」
 4. 系统托盘出现墨蓝圆角书签图标
-5. 按 **Alt+Space** 可切换面板显隐
+5. 按 **Ctrl+Alt+Space** 可切换面板显隐
 
 ### 2.4 生产构建（产出 .exe 安装包）
 
@@ -91,7 +91,7 @@ src-tauri/target/release/url-launcher.exe                           # 单文件�
 1. **添加网址**：点击底部「添加网址」或拖入浏览器链接
 2. **导入书签**：设置 → 导入 → 选浏览器导出的 `.html` 书签文件
 3. **指定浏览器**：设置 → 默认浏览器（system / Chrome / Edge / Firefox / 自定义路径）
-4. **修改快捷键**：设置 → 全局快捷键（默认 Alt+Space；避免 Ctrl+Space，会被 Windows IME 抢占）
+4. **修改快捷键**：设置 → 全局快捷键（默认 Ctrl+Alt+Space；避免 Ctrl+Space，会被 Windows IME 抢占；Alt+Space 可能被系统/其它软件占用，冲突时改键即可）
 5. **开机自启**：设置 → 开机自动启动
 
 ---
@@ -127,14 +127,15 @@ npm run dev
 node scripts/gen-icons.mjs
 ```
 
-### Q4: Alt+Space 快捷键无反应
+### Q4: 全局快捷键无反应
 
 **可能原因**：
-- Windows IME 占用了 Ctrl+Space（本项目默认用 Alt+Space，不受影响）
+- 该组合被系统或其它软件占用（例如 `Alt+Space` 是 Windows 系统菜单快捷键、部分启动器占用）
+- Windows IME 占用了 Ctrl+Space（本项目默认用 Ctrl+Alt+Space，不受影响）
 - 某些远程桌面软件抢占全局快捷键
 - 快捷键格式不合法
 
-**排查**：在设置中更换快捷键（如 `Alt+Q`），保存后立即生效。
+**排查**：在设置中更换快捷键（如 `Ctrl+Alt+Space` 或 `Alt+Q`），保存后立即生效。
 
 ### Q5: 高分屏（125%/150%/200% DPI）面板位置偏移
 

@@ -5,7 +5,7 @@
 
 use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::{
-    tray::{TrayIconBuilder, TrayIconEvent, MouseButton},
+    tray::{TrayIconBuilder, TrayIconEvent, MouseButton, MouseButtonState},
     AppHandle, Emitter,
 };
 
@@ -38,13 +38,22 @@ pub fn build_tray(app: &AppHandle) -> Result<(), AppError> {
         .on_menu_event(|app_handle, event| match event.id.as_ref() {
             "show" => crate::toggle_panel(app_handle),
             "settings" => {
+                // 先确保面板可见，再通知前端打开设置对话框（前端监听 navigate 事件）。
+                crate::show_panel(app_handle);
                 let _ = app_handle.emit("navigate", "settings");
             }
             "quit" => app_handle.exit(0),
             _ => {}
         })
         .on_tray_icon_event(move |_tray, event| {
-            if let TrayIconEvent::Click { button: MouseButton::Left, .. } = event {
+            // Windows 上一次左键点击会先后派发 Down/Up 两个 Click 事件，
+            // 只在 Up 时切换一次，避免面板"闪一下就消失"（双事件双切换）。
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
                 crate::toggle_panel(&app_for_tray);
             }
         })

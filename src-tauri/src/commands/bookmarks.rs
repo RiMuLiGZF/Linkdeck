@@ -3,6 +3,7 @@
 //! 解析 Netscape 书签文件，按文件夹映射分类，批量入库去重（spec F6 / AC-09）。
 //! 性能：整个导入循环包裹在单个 SQLite 事务中，避免每条记录单独 fsync。
 
+use std::collections::HashSet;
 use std::fs;
 
 use tauri::State;
@@ -29,6 +30,12 @@ pub async fn bookmarks_import(
         .map_err(AppError::from)?;
 
     let result = (|| -> Result<ImportResult, AppError> {
+        // 规范化去重：一次性加载现有 URL，避免逐条 O(n²) 扫描
+        let mut known: HashSet<String> = url_repo::list_all_urls(&guard)?
+            .into_iter()
+            .map(|u| crate::normalize::normalize_url(&u))
+            .collect();
+
         let mut imported = 0i64;
         let mut skipped = 0i64;
         for b in parsed {
@@ -44,12 +51,14 @@ pub async fn bookmarks_import(
                 }
                 _ => None,
             };
-            // 应用层去重
-            if url_repo::exists(&guard, &b.url) {
+            // 应用层去重（按规范化形式比较）
+            let normalized = crate::normalize::normalize_url(&b.url);
+            if known.contains(&normalized) {
                 skipped += 1;
                 continue;
             }
             url_repo::create(&guard, &b.url, b.title.clone(), cat_id, None)?;
+            known.insert(normalized);
             imported += 1;
         }
         Ok(ImportResult { imported, skipped })

@@ -10,6 +10,8 @@ import { useSettingsStore } from './stores/useSettingsStore';
 import { useGlobalShortcut } from './hooks/useGlobalShortcut';
 import { useDragDrop } from './hooks/useDragDrop';
 import { useDebouncedSearch } from './hooks/useDebouncedSearch';
+import { panelHide } from './services/tauri';
+import { listen } from '@tauri-apps/api/event';
 
 export default function App() {
   const searchRef = useRef<HTMLInputElement>(null);
@@ -32,6 +34,28 @@ export default function App() {
   useEffect(() => {
     void useUrlStore.getState().init();
     void useSettingsStore.getState().load();
+  }, []);
+
+  // 托盘"设置"菜单：Rust 端先显示面板，再发 navigate 事件打开设置对话框
+  useEffect(() => {
+    const unlistenPromise = listen<string>('navigate', (event) => {
+      if (event.payload === 'settings') {
+        useUrlStore.getState().openModal('settings');
+      }
+    });
+    return () => {
+      unlistenPromise.then((fn) => fn()).catch(() => {});
+    };
+  }, []);
+
+  // 后台抓取标题/favicon 完成后刷新列表（本地图标与标题即时回填）
+  useEffect(() => {
+    const unlistenPromise = listen<string>('url:meta-updated', () => {
+      void useUrlStore.getState().reload();
+    });
+    return () => {
+      unlistenPromise.then((fn) => fn()).catch(() => {});
+    };
   }, []);
 
   // 全局快捷键（注册/监听）
@@ -65,6 +89,7 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setVisible(false);
+        void panelHide();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         searchRef.current?.focus();

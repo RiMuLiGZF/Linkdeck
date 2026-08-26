@@ -349,6 +349,21 @@ paths:
         '200':
           description: 成功（void）
 
+  /commands/panel_hide:
+    post:
+      operationId: panel_hide
+      summary: 隐藏面板（前端关闭按钮 / Esc / 打开链接后调用；窗口显隐统一由 Rust 端执行）
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 成功（void）
+
   /commands/drag_resolve:
     post:
       operationId: drag_resolve
@@ -449,9 +464,10 @@ components:
           description: 全局快捷键组合，如 "Alt+Space"（'Mod+Key' 形式）
         defaultBrowser:
           type: string
-          description: "'chrome' | 'msedge' | 'firefox' | '<自定义 exe 绝对路径>'"
-          enum: [chrome, msedge, firefox]
-          # 注：自定义 exe 路径不是枚举值，但类型为 string，可由校验层放行
+          description: >
+            打开链接的浏览器偏好：'system'（系统默认，前端哨兵值，openUrl 时视为未指定）
+            / 'chrome' / 'msedge' / 'firefox' / '<自定义浏览器 exe 绝对路径>'。
+            自定义 exe 路径不是枚举值，由校验层放行。
         autostart:
           type: boolean
           description: 是否开机自启

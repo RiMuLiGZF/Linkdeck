@@ -20,7 +20,7 @@ fn row_to_category(row: &Row) -> Result<Category, rusqlite::Error> {
         color: row.get("color")?,
         icon: row.get("icon")?,
         created_at: row.get("created_at")?,
-        count: Some(row.get("count")?),
+        count: row.get("count")?,
     })
 }
 
@@ -86,7 +86,7 @@ pub fn create(
         color,
         icon,
         created_at,
-        count: Some(0),
+        count: 0,
     })
 }
 

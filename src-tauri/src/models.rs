@@ -27,13 +27,13 @@ pub struct Category {
     pub color: Option<String>,
     pub icon: Option<String>,
     pub created_at: String,
-    pub count: Option<i64>, // categories_list 聚合，非 DB 列
+    pub count: i64, // categories_list 聚合，非 DB 列
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
-    pub hotkey: String,          // 如 "Alt+Space"
+    pub hotkey: String,          // 如 "Ctrl+Alt+Space"
     pub default_browser: String, // 'chrome'|'msedge'|'firefox'|'<exe路径>'
     pub autostart: bool,
 }

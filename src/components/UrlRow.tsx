@@ -1,6 +1,6 @@
 // 单行网址（DESIGN-PAGES §1.4）。favicon 三态：loading(loader 旋转) / ok(img) / error(monogram)。
 // 悬浮操作组默认隐藏，hover/focus-within 显现。
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icon';
 import { getFaviconFallbacks, getInitial } from '../lib/favicon';
 import type { Url } from '../types/models';
@@ -33,6 +33,27 @@ export function UrlRow({
   const fallbackIdx = useRef(0);
   const [favSrc, setFavSrc] = useState(fallbacks[0]);
   const displayTitle = item.title?.trim() || item.url;
+
+  // faviconPath 由后台抓取异步回填：备选源变化时重置加载状态，重新走本地图标
+  useEffect(() => {
+    setFav('loading');
+    fallbackIdx.current = 0;
+    setFavSrc(fallbacks[0]);
+  }, [fallbacks]);
+
+  // 防呆：当前源长时间无响应（既未加载也未报错）时切到下一个备选源，避免 loader 永转
+  useEffect(() => {
+    if (fav !== 'loading') return;
+    const timer = setTimeout(() => {
+      if (fallbackIdx.current < fallbacks.length - 1) {
+        fallbackIdx.current += 1;
+        setFavSrc(fallbacks[fallbackIdx.current]);
+      } else {
+        setFav('error');
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [fav, favSrc, fallbacks]);
 
   const handleError = () => {
     if (fallbackIdx.current < fallbacks.length - 1) {
@@ -69,7 +90,6 @@ export function UrlRow({
           alt=""
           width={20}
           height={20}
-          loading="lazy"
           style={{ display: fav === 'ok' ? undefined : 'none' }}
           onLoad={() => setFav('ok')}
           onError={handleError}

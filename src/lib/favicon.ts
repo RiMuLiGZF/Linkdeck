@@ -18,25 +18,16 @@ export function getInitial(url: string): string {
 }
 
 /**
- * 取 favicon 图片源：
- * - 有本地缓存（faviconPath）→ 走 asset:// 协议（需 capabilities 授予 asset:default）
- * - 否则返回在线源列表（Google → DuckDuckGo），离线/失败由 <img> onError 降级 monogram
- */
-export function getFaviconSrc(url: string, faviconPath?: string | null): string {
-  if (faviconPath) return toAssetUrl(faviconPath);
-  const host = getDomain(url);
-  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`;
-}
-
-/**
- * 获取 favicon 备选源列表（用于降级链）。
- * 顺序：Google → DuckDuckGo
+ * 取 favicon 备选源列表（用于降级链）。
+ * 顺序：本地缓存（asset://）→ 站点自身 /favicon.ico → Google → DuckDuckGo → monogram。
+ * 站点自身 favicon 放在在线源首位：Google/DuckDuckGo 在国内网络常不可达，本地抓取失败时优先直连站点。
  */
 export function getFaviconFallbacks(url: string, faviconPath?: string | null): string[] {
-  if (faviconPath) return [toAssetUrl(faviconPath)];
   const host = getDomain(url);
-  return [
+  const online = [
+    `https://${host}/favicon.ico`,
     `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`,
     `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`,
   ];
+  return faviconPath ? [toAssetUrl(faviconPath), ...online] : online;
 }

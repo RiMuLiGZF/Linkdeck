@@ -8,6 +8,7 @@ import { CategorySidebar } from './CategorySidebar';
 import { UrlList } from './UrlList';
 import { FooterAddBar } from './FooterAddBar';
 import { useUrlStore } from '../stores/useUrlStore';
+import { panelHide } from '../services/tauri';
 import type { Url } from '../types/models';
 
 export interface LauncherPanelProps {
@@ -66,7 +67,10 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
           type="button"
           className="icon-btn"
           aria-label="关闭"
-          onClick={() => setVisible(false)}
+          onClick={() => {
+            setVisible(false);
+            void panelHide();
+          }}
         >
           <Icon name="x" size={20} />
         </button>

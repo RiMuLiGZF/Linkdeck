@@ -33,7 +33,7 @@ fn upsert(conn: &Connection, key: &str, value: &str) -> Result<(), AppError> {
 
 /// 读取全部设置；缺键时用安全默认值补全。
 pub fn get(conn: &Connection) -> Result<Settings, AppError> {
-    let hotkey = read_key(conn, "hotkey")?.unwrap_or_else(|| "Alt+Space".to_string());
+    let hotkey = read_key(conn, "hotkey")?.unwrap_or_else(|| "Ctrl+Alt+Space".to_string());
     let default_browser = read_key(conn, "default_browser")?.unwrap_or_default();
     let autostart = read_key(conn, "autostart")?
         .map(|v| v == "true")
@@ -56,7 +56,7 @@ pub fn set(conn: &Connection, s: &Settings) -> Result<(), AppError> {
 /// 首次启动时写入默认设置（仅当 hotkey 行尚不存在）。
 pub fn ensure_defaults(conn: &Connection) -> Result<(), AppError> {
     if read_key(conn, "hotkey")?.is_none() {
-        upsert(conn, "hotkey", "Alt+Space")?;
+        upsert(conn, "hotkey", "Ctrl+Alt+Space")?;
         upsert(conn, "default_browser", "")?;
         upsert(conn, "autostart", "false")?;
     }

@@ -4,7 +4,7 @@ import * as settingsSvc from '../services/settings';
 import type { Settings } from '../types/models';
 
 const DEFAULT_SETTINGS: Settings = {
-  hotkey: 'Alt+Space',
+  hotkey: 'Ctrl+Alt+Space',
   defaultBrowser: 'system',
   autostart: false,
 };

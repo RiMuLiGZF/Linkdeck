@@ -36,7 +36,6 @@ export interface SettingsDialogProps {
 export function SettingsDialog({ onClose }: SettingsDialogProps) {
   const settings = useSettingsStore((s) => s.settings);
   const save = useSettingsStore((s) => s.save);
-  const setAutostart = useSettingsStore((s) => s.setAutostart);
 
   const [hotkey, setHotkey] = useState(settings.hotkey);
   const [recording, setRecording] = useState(false);
@@ -52,6 +51,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
       ? '' : settings.defaultBrowser,
   );
   const [autostart, setAutostartLocal] = useState(settings.autostart);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // 快捷键录制：捕获 keydown，组装 'Mod+Key' 并校验。
   useEffect(() => {
@@ -132,10 +132,15 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
 
   const onSave = async () => {
     if (!canSave) return;
-    const next: Settings = { hotkey, defaultBrowser: resolvedBrowser, autostart };
-    await save(next);
-    await setAutostart(autostart);
-    onClose();
+    setSaveError(null);
+    try {
+      const next: Settings = { hotkey, defaultBrowser: resolvedBrowser, autostart };
+      // 自启状态已由 settings_set 在后端统一同步，无需前端再次调用
+      await save(next);
+      onClose();
+    } catch (e) {
+      setSaveError(typeof e === 'string' ? e : e instanceof Error ? e.message : '保存失败，请重试');
+    }
   };
 
   const footer = (
@@ -231,6 +236,9 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
           </button>
         </div>
       </div>
+      {saveError && (
+        <p className="field__error" role="alert">{saveError}</p>
+      )}
     </Modal>
   );
 }

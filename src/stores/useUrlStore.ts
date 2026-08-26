@@ -5,7 +5,7 @@
 import { create } from 'zustand';
 import * as urlsSvc from '../services/urls';
 import * as bookmarksSvc from '../services/bookmarks';
-import { openUrl as openUrlSvc, invoke } from '../services/tauri';
+import { openUrl as openUrlSvc, invoke, panelHide } from '../services/tauri';
 import { useSettingsStore } from './useSettingsStore';
 import type { Category, Url } from '../types/models';
 
@@ -159,8 +159,9 @@ export const useUrlStore = create<UrlStore>((set, get) => ({
     const browser = useSettingsStore.getState().settings.defaultBrowser;
     const app = browser && browser !== 'system' ? browser : undefined;
     await openUrlSvc(item.url, app);
-    // 打开后隐藏面板（AC-05 / AC-02）。
+    // 打开后隐藏面板（AC-05）：窗口隐藏统一走 Rust panel_hide，前端状态由事件同步。
     set({ visible: false });
+    void panelHide();
   },
 
   openSelected: async () => {

@@ -9,9 +9,7 @@ use crate::state::AppState;
 
 #[tauri::command]
 pub async fn autostart_enable(app: AppHandle) -> Result<(), AppError> {
-    app.autolaunch()
-        .enable()
-        .map_err(|e| AppError::Io(format!("开启自启失败: {e}")))?;
+    crate::apply_autostart(&app, true)?;
     let st = app.state::<AppState>();
     let mut s = settings_repo::get(&st.db.lock().unwrap())?;
     s.autostart = true;
@@ -21,9 +19,7 @@ pub async fn autostart_enable(app: AppHandle) -> Result<(), AppError> {
 
 #[tauri::command]
 pub async fn autostart_disable(app: AppHandle) -> Result<(), AppError> {
-    app.autolaunch()
-        .disable()
-        .map_err(|e| AppError::Io(format!("关闭自启失败: {e}")))?;
+    crate::apply_autostart(&app, false)?;
     let st = app.state::<AppState>();
     let mut s = settings_repo::get(&st.db.lock().unwrap())?;
     s.autostart = false;

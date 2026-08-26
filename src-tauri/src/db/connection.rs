@@ -22,5 +22,8 @@ pub fn open(app_data_dir: &Path) -> Result<Connection, AppError> {
     conn.execute_batch(migration)
         .map_err(|e| AppError::Sqlite(format!("迁移执行失败: {e}")))?;
 
+    // 首次启动写入默认设置（hotkey=Ctrl+Alt+Space 等），保证 settings 行存在。
+    crate::db::repositories::settings_repo::ensure_defaults(&conn)?;
+
     Ok(conn)
 }

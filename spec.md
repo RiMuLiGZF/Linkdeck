@@ -2,7 +2,7 @@
 
 > 生成日期：2026-08-02
 > 基于：PRD v1（许清楚）+ 架构方案 v1（高见远）+ 设计方向 v1（颜好看）
-> 状态：已确认（用户于 2026-08-02 确认三文档 + 默认快捷键 Alt+Space）
+> 状态：已确认（用户于 2026-08-02 确认三文档；2026-08-06 默认快捷键由 Alt+Space 改为 Ctrl+Alt+Space）
 > 流程定位：Phase 1.5 规格契约。后续设计 / 开发 / 测试均以本文件为唯一依据。
 
 ---
@@ -16,7 +16,7 @@
 
 | 优先级 | 功能 | 验收标准摘要 | RICE |
 |--------|------|--------------|------|
-| P0 | F1 全局快捷键唤出 + 托盘常驻 | Alt+Space 唤出右上角面板，焦点在搜索框，托盘有常驻图标 | 15.0 |
+| P0 | F1 全局快捷键唤出 + 托盘常驻 | Ctrl+Alt+Space 唤出右上角面板，焦点在搜索框，托盘有常驻图标 | 15.0 |
 | P0 | F2 网址分类管理（增删改 / 拖拽排序） | 分类可建 / 改名 / 删 / 拖拽排序，每类可设颜色 | 6.7 |
 | P0 | F3 实时搜索 / 过滤 | 输入关键词实时过滤（标题/URL/分类），键盘可达 | 10.0 |
 | P0 | F4 点击用指定浏览器直开 | 按设置用指定浏览器（或系统默认）打开 URL，面板自动隐藏 | 20.0 |
@@ -114,8 +114,8 @@ favicon 二进制存于 `app_data_dir/favicons/{sha1(url)}.png`，不在 DB 内�
 ## 9. 验收标准（锁定——EARS 格式，QA 测试唯一依据）
 | 编号 | 功能 | EARS 验收标准 | 优先级 |
 |------|------|---------------|--------|
-| AC-01 | 唤出 | When 用户按 Alt+Space，系统**必须**在右上角显示面板并将焦点置于搜索框 | P0 |
-| AC-02 | 唤出 | While 面板已显示，When 用户再次按 Alt+Space 或点击关闭，系统**必须**隐藏面板 | P0 |
+| AC-01 | 唤出 | When 用户按 Ctrl+Alt+Space，系统**必须**在右上角显示面板并将焦点置于搜索框 | P0 |
+| AC-02 | 唤出 | While 面板已显示，When 用户再次按 Ctrl+Alt+Space 或点击关闭，系统**必须**隐藏面板 | P0 |
 | AC-03 | 托盘 | When 应用启动，系统**必须**在系统托盘显示常驻图标且左键可切换面板 | P0 |
 | AC-04 | 搜索 | When 用户在搜索框输入关键词，系统**必须**在 50ms 内实时过滤仅显示匹配标题/URL/分类的条目 | P0 |
 | AC-05 | 打开 | When 用户点击某条目（或回车），If 设置了指定浏览器，系统**必须**用该浏览器打开 URL 并隐藏面板 | P0 |
@@ -141,7 +141,7 @@ favicon 二进制存于 `app_data_dir/favicons/{sha1(url)}.png`，不在 DB 内�
 ## 11. 内嵌已知坑（从架构师方案拉取）
 | 坑 | 技术栈指纹 | 根因 | 修法 |
 |----|------------|------|------|
-| 全局快捷键 IME 冲突 | tauri-plugin-global-shortcut + Windows | Ctrl+Space 是输入法切换键 | 默认改 Alt+Space；录制时检测系统保留组合并禁止保存 |
+| 全局快捷键 IME 冲突 | tauri-plugin-global-shortcut + Windows | Ctrl+Space 是输入法切换键；Alt+Space 是 Windows 系统菜单快捷键，易被其它软件占用 | 默认 Ctrl+Alt+Space；录制时检测系统保留组合并禁止保存 |
 | 链接拖拽 MIME 歧义 | WebView2 drag-drop | 浏览器拖链接常投为文件/文本 | 双通道：dragDropEnabled 处理 paths + HTML5 drop 取 text/uri-list |
 | DPI 定位偏位 | Windows 高 DPI | 未乘 scale_factor | 定位乘 `scale_factor` |
 | SPA title 占位 | reqwest + scraper | SPA 首屏无 title | best-effort，允许手改 |
@@ -153,7 +153,7 @@ favicon 二进制存于 `app_data_dir/favicons/{sha1(url)}.png`，不在 DB 内�
 ```bash
 # 1. 开发启动（需 Rust + WebView2 环境）
 npm run tauri dev
-# 断言：托盘图标出现，按 Alt+Space 右上角面板弹出
+# 断言：托盘图标出现，按 Ctrl+Alt+Space 右上角面板弹出
 
 # 2. 核心成功流
 # - 手动添加 github.com → 自动抓标题+favicon，入库默认分类
@@ -170,4 +170,5 @@ npm run tauri dev
 | 日期 | 变更内容 | 原因 | 影响范围 |
 |------|----------|------|----------|
 | 2026-08-02 | 初始 Spec 锁定 | 用户确认三文档 + Alt+Space 默认 | 全域 |
+| 2026-08-06 | 默认快捷键 Alt+Space → Ctrl+Alt+Space | Alt+Space 与 Windows 系统菜单/其它软件冲突 | F1/AC-01/AC-02/§11/§12 |
 | 2026-08-02 | MVP 范围同步 PRD v1.1 | F7 纯链接拖拽降 P2 增强（MIME 歧义待 e2e）；F6 含 .html 拖入窗口；性能基线对齐 | 第2/9/10节 |

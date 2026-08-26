@@ -23,6 +23,7 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
   const [url, setUrl] = useState('');
   const [categoryId, setCategoryId] = useState<string>(''); // '' = 未分类
   const [touched, setTouched] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (editItem) {
@@ -46,13 +47,18 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
       setTouched(true);
       return;
     }
-    const cat = categoryId === '' ? null : categoryId;
-    if (editItem) {
-      await updateUrl({ id: editItem.id, title: name.trim() || null, categoryId: cat });
-    } else {
-      await addUrl({ url: url.trim(), title: name.trim() || null, categoryId: cat });
+    setSubmitError(null);
+    try {
+      const cat = categoryId === '' ? null : categoryId;
+      if (editItem) {
+        await updateUrl({ id: editItem.id, title: name.trim() || null, categoryId: cat });
+      } else {
+        await addUrl({ url: url.trim(), title: name.trim() || null, categoryId: cat });
+      }
+      closeModal();
+    } catch (e) {
+      setSubmitError(typeof e === 'string' ? e : e instanceof Error ? e.message : '保存失败，请重试');
     }
-    closeModal();
   };
 
   const footer = (
@@ -136,6 +142,9 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
             <Icon name="chevronDown" size={20} className="select__icon" />
           </div>
         </div>
+        {submitError && (
+          <p className="field__error" role="alert">{submitError}</p>
+        )}
       </form>
     </Modal>
   );

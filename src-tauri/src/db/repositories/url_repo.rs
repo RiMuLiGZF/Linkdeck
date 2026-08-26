@@ -23,14 +23,23 @@ fn row_to_url(row: &Row) -> Result<Url, rusqlite::Error> {
     })
 }
 
-/// 判断 url 是否已存在（应用层去重，因为 schema 未加唯一约束）。
-pub fn exists(conn: &Connection, url: &str) -> bool {
-    conn.query_row(
-        "SELECT 1 FROM links WHERE url = :url",
-        named_params! { ":url": url },
-        |_| Ok(()),
-    )
-    .is_ok()
+/// 返回全部链接的 url 列（供应用层规范化去重，避免重复查询）。
+pub fn list_all_urls(conn: &Connection) -> Result<Vec<String>, AppError> {
+    let mut stmt = conn.prepare("SELECT url FROM links")?;
+    let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
+    let mut out = Vec::new();
+    for r in rows {
+        out.push(r?);
+    }
+    Ok(out)
+}
+
+/// 规范化去重：与已有链接的规范化形式比较。
+/// 使 https://a.com 与 https://a.com/ 视为同一条。
+pub fn exists_normalized(conn: &Connection, normalized: &str) -> bool {
+    list_all_urls(conn)
+        .map(|urls| urls.iter().any(|u| crate::normalize::normalize_url(u) == normalized))
+        .unwrap_or(false)
 }
 
 /// 按 id 查询单条（不存在返回 None）。
@@ -159,15 +168,16 @@ pub fn update(
     get(conn, id)?.ok_or_else(|| AppError::NotFound(format!("链接不存在: {id}")))
 }
 
-/// 更新标题与 favicon 路径（后台 fetch_meta 完成后回填）。
+/// 更新 favicon，并按需回填标题（B-05：title 传 None 时保留现有标题，
+/// 避免后台抓取覆盖用户手填标题；url_refresh_meta 传 Some 强制回填）。
 pub fn update_meta(
     conn: &Connection,
     id: &str,
-    title: &str,
+    title: Option<&str>,
     favicon_path: Option<&str>,
 ) -> Result<(), AppError> {
     conn.execute(
-        "UPDATE links SET title = :title, favicon_path = :favicon WHERE id = :id",
+        "UPDATE links SET title = COALESCE(:title, title), favicon_path = :favicon WHERE id = :id",
         named_params! {
             ":title": title,
             ":favicon": favicon_path,

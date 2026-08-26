@@ -10,6 +10,7 @@ mod db;
 mod dragdrop;
 mod error;
 mod models;
+mod normalize;
 mod shortcut;
 mod state;
 mod tray;
@@ -66,13 +67,13 @@ pub fn run() {
             // 6. 系统托盘
             crate::tray::build_tray(&app_handle).expect("tray build failed");
 
-            // 7. 注册默认全局快捷键（读设置中的 hotkey，默认 Alt+Space）
+            // 7. 注册默认全局快捷键（读设置中的 hotkey，默认 Ctrl+Alt+Space）
             {
                 let state = app_handle.state::<AppState>();
                 let db = state.db.lock().unwrap();
                 let hotkey = settings_repo::get(&db)
                     .map(|s| s.hotkey)
-                    .unwrap_or_else(|_| "Alt+Space".to_string());
+                    .unwrap_or_else(|_| "Ctrl+Alt+Space".to_string());
                 let _ = register_panel_shortcut(&app_handle, &hotkey);
             }
 
@@ -136,28 +137,57 @@ pub fn run() {
             commands::autostart::autostart_is_enabled,
             // 面板 / 拖拽
             commands::panel::panel_toggle,
+            commands::panel::panel_hide,
             commands::drag::drag_resolve,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
-/// 切换面板可见性：可见→隐藏并广播 false；不可见→重新锚定右上、显示、聚焦并广播 true。
+/// 显示面板（幂等）：重新锚定右上、显示、聚焦并广播 true。
 /// 经 run_on_main_thread 派发，确保窗口操作在主线程执行（全局快捷键回调来自独立线程）。
+pub fn show_panel(app: &AppHandle) {
+    dispatch_panel(app, true);
+}
+
+/// 隐藏面板（幂等）：仅当窗口可见时隐藏并广播 false。
+pub fn hide_panel(app: &AppHandle) {
+    dispatch_panel(app, false);
+}
+
+/// 切换面板可见性：可见→隐藏并广播 false；不可见→重新锚定右上、显示、聚焦并广播 true。
 pub fn toggle_panel(app: &AppHandle) {
     let app_for_call = app.clone();
     let app_for_closure = app.clone();
     let _ = app_for_call.run_on_main_thread(move || {
         if let Some(window) = app_for_closure.get_webview_window("main") {
             let visible = window.is_visible().unwrap_or(false);
-            if visible {
-                let _ = window.hide();
-                let _ = app_for_closure.emit("panel:toggle", false);
-            } else {
-                anchor_top_right(&window);
-                let _ = window.show();
-                let _ = window.set_focus();
-                let _ = app_for_closure.emit("panel:toggle", true);
+            set_panel_visible(&window, &app_for_closure, !visible);
+        }
+    });
+}
+
+/// 在已派发到主线程的前提下，按目标可见性应用窗口状态并广播事件。
+fn set_panel_visible(window: &tauri::WebviewWindow, app: &AppHandle, visible: bool) {
+    if visible {
+        anchor_top_right(window);
+        let _ = window.show();
+        let _ = window.set_focus();
+    } else {
+        let _ = window.hide();
+    }
+    let _ = app.emit("panel:toggle", visible);
+}
+
+/// 将面板设置到指定可见性（与当前状态相同时不重复操作，保持幂等）。
+fn dispatch_panel(app: &AppHandle, visible: bool) {
+    let app_for_call = app.clone();
+    let app_for_closure = app.clone();
+    let _ = app_for_call.run_on_main_thread(move || {
+        if let Some(window) = app_for_closure.get_webview_window("main") {
+            let current = window.is_visible().unwrap_or(false);
+            if current != visible {
+                set_panel_visible(&window, &app_for_closure, visible);
             }
         }
     });
@@ -176,7 +206,7 @@ pub fn anchor_top_right(window: &tauri::WebviewWindow) {
     }
 }
 
-/// 解析 combo（如 "Alt+Space"）并注册全局快捷键，回调中切换面板。
+/// 解析 combo（如 "Ctrl+Alt+Space"）并注册全局快捷键，回调中切换面板。
 /// 使用 2.3.2 的 on_shortcut 附加每快捷键处理器（register 不带 handler）。
 pub fn register_panel_shortcut(app: &AppHandle, combo: &str) -> Result<(), AppError> {
     app.global_shortcut()
@@ -194,8 +224,12 @@ pub fn unregister_panel_shortcut(app: &AppHandle, combo: &str) {
 }
 
 /// 按设置同步开机自启状态。autostart 插件 ManagerExt 方法为 autolaunch()。
+/// 先对比当前状态，幂等执行：Windows 上对未启用的项调用 disable() 会因注册表项不存在而报错。
 pub fn apply_autostart(app: &AppHandle, enabled: bool) -> Result<(), AppError> {
     let m = app.autolaunch();
+    if m.is_enabled().unwrap_or(false) == enabled {
+        return Ok(());
+    }
     if enabled {
         m.enable()
             .map_err(|e| AppError::Io(format!("enable autostart failed: {e}")))

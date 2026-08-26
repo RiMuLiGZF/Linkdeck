@@ -1,7 +1,7 @@
 //! commands/urls.rs — 链接相关命令（urls_list / url_create / url_update /
 //! url_delete / url_refresh_meta）。签名与 error.rs 契约、openapi 字段对齐。
 
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 
 use crate::db::repositories::url_repo;
 use crate::error::AppError;
@@ -27,7 +27,7 @@ pub async fn urls_list(
 #[tauri::command]
 pub async fn url_create(
     state: State<'_, AppState>,
-    _app: AppHandle,
+    app: AppHandle,
     url: String,
     title: Option<String>,
     category_id: Option<String>,
@@ -37,23 +37,29 @@ pub async fn url_create(
     crate::error::ensure_safe_url(&url)?;
     let created = {
         let guard = state.db.lock().unwrap();
-        if url_repo::exists(&guard, &url) {
+        if url_repo::exists_normalized(&guard, &crate::normalize::normalize_url(&url)) {
             return Err(AppError::InvalidUrl("该链接已存在".into()));
         }
         url_repo::create(&guard, &url, title.clone(), category_id.clone(), note.clone())?
     };
-    // 触发后台 fetch_meta（不阻塞返回；抓取完成后回填标题/favicon）
+    // 触发后台 fetch_meta（不阻塞返回；抓取完成后回填 favicon，标题仅在未手填时补全）
     let st = state.inner().clone();
     let bg_url = created.url.clone();
     let bg_id = created.id.clone();
+    let user_filled_title = created.title.is_some();
+    let app_for_event = app.clone();
     tauri::async_runtime::spawn(async move {
         let meta = crate::commands::fetch::fetch_url_meta(&st, &bg_url).await;
+        // B-05 修复：用户手填标题时只回填 favicon，不覆盖原标题。
+        let title = if user_filled_title { None } else { Some(meta.title.as_str()) };
         let _ = url_repo::update_meta(
             &st.db.lock().unwrap(),
             &bg_id,
-            &meta.title,
+            title,
             meta.favicon_path.as_deref(),
         );
+        // 通知前端刷新该行（标题/favicon 已回填，立即显示本地图标）
+        let _ = app_for_event.emit("url:meta-updated", &bg_id);
     });
     Ok(created)
 }
@@ -99,6 +105,6 @@ pub async fn url_refresh_meta(state: State<'_, AppState>, id: String) -> Result<
     }
     let meta = crate::commands::fetch::fetch_url_meta(&state, &url).await;
     let guard = state.db.lock().unwrap();
-    url_repo::update_meta(&guard, &id, &meta.title, meta.favicon_path.as_deref())?;
+    url_repo::update_meta(&guard, &id, Some(&meta.title), meta.favicon_path.as_deref())?;
     url_repo::get(&guard, &id).map(|o| o.ok_or_else(|| AppError::NotFound("链接不存在".into())))?
 }

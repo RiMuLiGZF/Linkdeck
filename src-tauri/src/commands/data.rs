@@ -4,7 +4,7 @@
 //! 性能：整个导入循环包裹在单个 SQLite 事务中。
 //! 安全约束沿用 AC-15（仅 http/https），所有写入走 repositories 的命名参数。
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 
 use rusqlite::Connection;
@@ -124,6 +124,12 @@ pub async fn import_json(
             }
         }
 
+        // 规范化去重：一次性加载现有 URL，避免逐条 O(n²) 扫描
+        let mut known: HashSet<String> = url_repo::list_all_urls(&guard)?
+            .into_iter()
+            .map(|u| crate::normalize::normalize_url(&u))
+            .collect();
+
         let mut imported = 0i64;
         let mut skipped = 0i64;
         for link in &backup.links {
@@ -132,8 +138,9 @@ pub async fn import_json(
                 skipped += 1;
                 continue;
             }
-            // 应用层去重（与书签导入一致）
-            if url_repo::exists(&guard, &link.url) {
+            // 应用层去重（与书签导入一致，按规范化形式比较）
+            let normalized = crate::normalize::normalize_url(&link.url);
+            if known.contains(&normalized) {
                 skipped += 1;
                 continue;
             }
@@ -145,6 +152,7 @@ pub async fn import_json(
                 category_id,
                 link.note.clone(),
             )?;
+            known.insert(normalized);
             imported += 1;
         }
 
