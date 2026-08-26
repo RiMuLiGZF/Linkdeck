@@ -14,6 +14,7 @@ pub async fn urls_list(
     category_id: Option<String>,
     search: Option<String>,
     limit: Option<i64>,
+    has_start_date: Option<bool>,
 ) -> Result<Vec<Url>, AppError> {
     let limit = limit.unwrap_or(200);
     url_repo::list(
@@ -21,7 +22,20 @@ pub async fn urls_list(
         category_id.as_deref(),
         search.as_deref(),
         limit,
+        has_start_date,
     )
+}
+
+#[tauri::command]
+pub async fn urls_competition_count(state: State<'_, AppState>) -> Result<i64, AppError> {
+    let guard = state.db.lock().unwrap();
+    guard
+        .query_row(
+            "SELECT COUNT(*) FROM links WHERE start_date IS NOT NULL",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|e| AppError::Sqlite(e.to_string()))
 }
 
 #[tauri::command]
@@ -32,6 +46,8 @@ pub async fn url_create(
     title: Option<String>,
     category_id: Option<String>,
     note: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
 ) -> Result<Url, AppError> {
     // AC-15：仅允许 http/https
     crate::error::ensure_safe_url(&url)?;
@@ -40,7 +56,7 @@ pub async fn url_create(
         if url_repo::exists_normalized(&guard, &crate::normalize::normalize_url(&url)) {
             return Err(AppError::InvalidUrl("该链接已存在".into()));
         }
-        url_repo::create(&guard, &url, title.clone(), category_id.clone(), note.clone())?
+        url_repo::create(&guard, &url, title.clone(), category_id.clone(), note.clone(), start_date.clone(), end_date.clone())?
     };
     // 触发后台 fetch_meta（不阻塞返回；抓取完成后回填 favicon，标题仅在未手填时补全）
     let st = state.inner().clone();
@@ -71,12 +87,14 @@ pub async fn url_update(
     title: Option<String>,
     category_id: Option<String>,
     note: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
 ) -> Result<Url, AppError> {
     let guard = state.db.lock().unwrap();
     if url_repo::get(&guard, &id)?.is_none() {
         return Err(AppError::NotFound(format!("链接不存在: {id}")));
     }
-    url_repo::update(&guard, &id, title, category_id, note)
+    url_repo::update(&guard, &id, title, category_id, note, start_date, end_date)
 }
 
 #[tauri::command]

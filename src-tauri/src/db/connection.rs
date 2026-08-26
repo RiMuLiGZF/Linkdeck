@@ -37,6 +37,10 @@ pub fn open(app_data_dir: &Path) -> Result<Connection, AppError> {
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_links_normalized_url ON links(normalized_url);"
     )?;
 
+    // 兼容已有数据库：start_date / end_date 列在比赛管理功能中添加
+    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN start_date TEXT;");
+    let _ = conn.execute_batch("ALTER TABLE links ADD COLUMN end_date TEXT;");
+
     // 首次启动写入默认设置（hotkey=Ctrl+Alt+Space 等），保证 settings 行存在。
     crate::db::repositories::settings_repo::ensure_defaults(&conn)?;
 

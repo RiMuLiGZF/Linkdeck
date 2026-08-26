@@ -236,6 +236,13 @@ button, input, select { font-family: inherit; color: inherit; }
 }
 .sidebar__manage-btn:hover { background: var(--surface); color: var(--fg-2); }
 .sidebar__manage-btn:focus-visible { box-shadow: var(--focus-ring); outline: none; }
+/* 分类与比赛之间的分隔线 */
+.sidebar__divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-1) var(--space-3);
+  flex-shrink: 0;
+}
 .category-item {
   display: flex;
   align-items: center;
@@ -355,6 +362,30 @@ button, input, select { font-family: inherit; color: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 比赛日期行 */
+.url-row__dates {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 11px;
+  color: var(--meta);
+  margin-top: 2px;
+}
+.url-row__date-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+/* 比赛状态标签 */
+.status-tag {
+  font-size: 10px;
+  font-weight: 510;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  line-height: 16px;
+}
+.status-tag--upcoming { color: var(--success); background: #E6F7EE; }
+.status-tag--ongoing  { color: var(--accent);  background: #EDF0FA; }
+.status-tag--ended    { color: var(--meta);    background: #F0F1F4; }
 .category-pill {
   background: var(--surface-warm);
   color: var(--muted);
@@ -486,6 +517,23 @@ button, input, select { font-family: inherit; color: inherit; }
 .input::placeholder { color: var(--meta); }
 .input:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
 .input--error { border-color: var(--danger); }
+/* 折叠按钮：比赛时间展开/收起 */
+.field__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) 0;
+  border: none;
+  background: none;
+  color: var(--fg-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-soft);
+  transition: color var(--motion-fast) var(--ease-standard);
+}
+.field__toggle:hover { color: var(--fg); }
+.field__toggle-icon { margin-left: auto; opacity: 0.5; }
 .field__error { color: var(--danger); font-size: var(--text-xs); margin: 0; }
 
 .select { position: relative; display: flex; align-items: center; }

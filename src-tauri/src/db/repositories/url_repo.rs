@@ -20,6 +20,8 @@ fn row_to_url(row: &Row) -> Result<Url, rusqlite::Error> {
         category_id: row.get("category_id")?,
         note: row.get("note")?,
         favicon_path: row.get("favicon_path")?,
+        start_date: row.get("start_date")?,
+        end_date: row.get("end_date")?,
         created_at: row.get("created_at")?,
     })
 }
@@ -49,7 +51,7 @@ pub fn exists_normalized(conn: &Connection, normalized: &str) -> bool {
 /// 按 id 查询单条（不存在返回 None）。
 pub fn get(conn: &Connection, id: &str) -> Result<Option<Url>, AppError> {
     let res = conn.query_row(
-        "SELECT id, title, url, category_id, note, favicon_path, created_at \
+        "SELECT id, title, url, category_id, note, favicon_path, start_date, end_date, created_at \
          FROM links WHERE id = :id",
         named_params! { ":id": id },
         row_to_url,
@@ -68,17 +70,31 @@ pub fn list(
     category_id: Option<&str>,
     search: Option<&str>,
     limit: i64,
+    has_start_date: Option<bool>,
 ) -> Result<Vec<Url>, AppError> {
     // 仅拼接静态 SQL 片段；用户数据一律通过 :like / :category_id / :limit 绑定。
-    let sql = String::from(
-        "SELECT l.id, l.title, l.url, l.category_id, l.note, l.favicon_path, l.created_at \
-         FROM links l LEFT JOIN categories c ON l.category_id = c.id \
-         WHERE (:category_id IS NULL OR l.category_id = :category_id) \
-           AND (:search IS NULL OR l.title LIKE :like ESCAPE '\\' \
-                OR l.url LIKE :like ESCAPE '\\' \
-                OR c.name LIKE :like ESCAPE '\\') \
-         ORDER BY l.created_at DESC LIMIT :limit",
-    );
+    let sql = if has_start_date == Some(true) {
+        String::from(
+            "SELECT l.id, l.title, l.url, l.category_id, l.note, l.favicon_path, l.start_date, l.end_date, l.created_at \
+             FROM links l LEFT JOIN categories c ON l.category_id = c.id \
+             WHERE (:category_id IS NULL OR l.category_id = :category_id) \
+               AND (:search IS NULL OR l.title LIKE :like ESCAPE '\\' \
+                    OR l.url LIKE :like ESCAPE '\\' \
+                    OR c.name LIKE :like ESCAPE '\\') \
+               AND l.start_date IS NOT NULL \
+             ORDER BY l.start_date ASC, l.created_at DESC LIMIT :limit"
+        )
+    } else {
+        String::from(
+            "SELECT l.id, l.title, l.url, l.category_id, l.note, l.favicon_path, l.start_date, l.end_date, l.created_at \
+             FROM links l LEFT JOIN categories c ON l.category_id = c.id \
+             WHERE (:category_id IS NULL OR l.category_id = :category_id) \
+               AND (:search IS NULL OR l.title LIKE :like ESCAPE '\\' \
+                    OR l.url LIKE :like ESCAPE '\\' \
+                    OR c.name LIKE :like ESCAPE '\\') \
+             ORDER BY l.created_at DESC LIMIT :limit"
+        )
+    };
 
     // 转义 LIKE 通配符，防止用户输入 % / _ 改变查询语义。
     let like = match search {
@@ -122,13 +138,15 @@ pub fn create(
     title: Option<String>,
     category_id: Option<String>,
     note: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
 ) -> Result<Url, AppError> {
     let id = Uuid::new_v4().to_string();
     let created_at = Utc::now().to_rfc3339();
     let normalized_url = normalize::normalize_url(url);
     conn.execute(
-        "INSERT INTO links (id, title, url, category_id, note, favicon_path, normalized_url, created_at) \
-         VALUES (:id, :title, :url, :category_id, :note, NULL, :normalized_url, :created_at)",
+        "INSERT INTO links (id, title, url, category_id, note, favicon_path, normalized_url, start_date, end_date, created_at) \
+         VALUES (:id, :title, :url, :category_id, :note, NULL, :normalized_url, :start_date, :end_date, :created_at)",
         named_params! {
             ":id": id,
             ":title": title,
@@ -136,6 +154,8 @@ pub fn create(
             ":category_id": category_id,
             ":note": note,
             ":normalized_url": normalized_url,
+            ":start_date": start_date,
+            ":end_date": end_date,
             ":created_at": created_at,
         },
     )?;
@@ -146,6 +166,8 @@ pub fn create(
         category_id,
         note,
         favicon_path: None,
+        start_date,
+        end_date,
         created_at,
     })
 }
@@ -157,17 +179,23 @@ pub fn update(
     title: Option<String>,
     category_id: Option<String>,
     note: Option<String>,
+    start_date: Option<String>,
+    end_date: Option<String>,
 ) -> Result<Url, AppError> {
     conn.execute(
         "UPDATE links SET \
          title = :title, \
          category_id = :category_id, \
-         note = :note \
+         note = :note, \
+         start_date = :start_date, \
+         end_date = :end_date \
          WHERE id = :id",
         named_params! {
             ":title": title,
             ":category_id": category_id,
             ":note": note,
+            ":start_date": start_date,
+            ":end_date": end_date,
             ":id": id,
         },
     )?;

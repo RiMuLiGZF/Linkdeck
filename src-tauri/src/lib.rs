@@ -129,6 +129,7 @@ pub fn run() {
             commands::urls::url_update,
             commands::urls::url_delete,
             commands::urls::url_refresh_meta,
+            commands::urls::urls_competition_count,
             // 分类
             commands::categories::categories_list,
             commands::categories::category_create,

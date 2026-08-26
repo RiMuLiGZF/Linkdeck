@@ -15,6 +15,8 @@ pub struct Url {
     pub category_id: Option<String>, // 可空 = 未分类
     pub note: Option<String>,
     pub favicon_path: Option<String>, // 可空
+    pub start_date: Option<String>,    // 比赛管理：开始时间
+    pub end_date: Option<String>,      // 比赛管理：结束时间
     pub created_at: String,
 }
 

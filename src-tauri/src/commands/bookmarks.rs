@@ -57,7 +57,7 @@ pub async fn bookmarks_import(
                 skipped += 1;
                 continue;
             }
-            url_repo::create(&guard, &b.url, b.title.clone(), cat_id, None)?;
+            url_repo::create(&guard, &b.url, b.title.clone(), cat_id, None, None, None)?;
             known.insert(normalized);
             imported += 1;
         }

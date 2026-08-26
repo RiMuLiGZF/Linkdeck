@@ -9,6 +9,7 @@ import {
   Folder,
   FolderOpen,
   ChevronDown,
+  ChevronUp,
   Plus,
   Upload,
   ExternalLink,
@@ -21,6 +22,7 @@ import {
   Keyboard,
   Download,
   Check,
+  Calendar,
   AlertTriangle,
 } from 'lucide-react';
 
@@ -31,6 +33,7 @@ export type IconName =
   | 'folder'
   | 'folderOpen'
   | 'chevronDown'
+  | 'chevronUp'
   | 'plus'
   | 'upload'
   | 'externalLink'
@@ -43,6 +46,7 @@ export type IconName =
   | 'keyboard'
   | 'download'
   | 'check'
+  | 'calendar'
   | 'alertTriangle';
 
 // 设计名 → Lucide 组件映射（gear 对应 Settings，trash 对应 Trash2，loader 对应 Loader2）。
@@ -53,6 +57,7 @@ const ICON_MAP: Record<IconName, ComponentType<LucideProps>> = {
   folder: Folder,
   folderOpen: FolderOpen,
   chevronDown: ChevronDown,
+  chevronUp: ChevronUp,
   plus: Plus,
   upload: Upload,
   externalLink: ExternalLink,
@@ -65,6 +70,7 @@ const ICON_MAP: Record<IconName, ComponentType<LucideProps>> = {
   keyboard: Keyboard,
   download: Download,
   check: Check,
+  calendar: Calendar,
   alertTriangle: AlertTriangle,
 };
 

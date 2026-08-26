@@ -151,6 +151,8 @@ pub async fn import_json(
                 link.title.clone(),
                 category_id,
                 link.note.clone(),
+                None,
+                None,
             )?;
             known.insert(normalized);
             imported += 1;

@@ -10,6 +10,7 @@ import { useSettingsStore } from './useSettingsStore';
 import type { Category, Url } from '../types/models';
 
 export type ActiveCategory = 'all' | 'uncategorized' | string;
+export type ActiveView = 'bookmarks' | 'competitions';
 export type ModalKind = 'add' | 'import' | 'settings' | 'categories' | null;
 
 const MAX_FETCH = 5000;
@@ -19,6 +20,8 @@ interface UrlStore {
   urls: Url[];
   uncategorizedCount: number;
   activeCategoryId: ActiveCategory;
+  activeView: ActiveView;
+  competitionCount: number;
   query: string;
   debouncedQuery: string;
   selectedIndex: number;
@@ -39,14 +42,15 @@ interface UrlStore {
   setQuery: (q: string) => void;
   applyDebounced: (q: string) => void;
   setActiveCategory: (id: ActiveCategory) => void;
+  setActiveView: (v: ActiveView) => void;
   setSelectedIndex: (i: number) => void;
   move: (delta: number) => void;
 
   openSelected: () => Promise<void>;
   openItem: (item: Url) => Promise<void>;
 
-  addUrl: (args: { url: string; title?: string | null; categoryId?: string | null }) => Promise<void>;
-  updateUrl: (args: { id: string; title?: string | null; categoryId?: string | null; note?: string | null }) => Promise<void>;
+  addUrl: (args: { url: string; title?: string | null; categoryId?: string | null; startDate?: string | null; endDate?: string | null }) => Promise<void>;
+  updateUrl: (args: { id: string; title?: string | null; categoryId?: string | null; note?: string | null; startDate?: string | null; endDate?: string | null }) => Promise<void>;
   deleteUrl: (id: string) => Promise<void>;
   refreshMeta: (id: string) => Promise<void>;
   importBookmarks: (path: string) => Promise<{ imported: number; skipped: number }>;
@@ -77,6 +81,8 @@ export const useUrlStore = create<UrlStore>((set, get) => ({
   urls: [],
   uncategorizedCount: 0,
   activeCategoryId: 'all',
+  activeView: 'bookmarks',
+  competitionCount: 0,
   query: '',
   debouncedQuery: '',
   selectedIndex: 0,
@@ -103,19 +109,23 @@ export const useUrlStore = create<UrlStore>((set, get) => ({
   // 分类单独拉取（含计数），与链接列表解耦。
   reloadCategories: async () => {
     try {
-      const list = await invoke<Category[]>('categories_list', {});
-      set({ categories: list });
+      const [list, competitionCount] = await Promise.all([
+        invoke<Category[]>('categories_list', {}),
+        invoke<number>('urls_competition_count', {}),
+      ]);
+      set({ categories: list, competitionCount });
     } catch {
       /* 后端未就绪时保留空列表 */
     }
   },
 
   reload: async () => {
-    const { activeCategoryId, debouncedQuery } = get();
+    const { activeCategoryId, debouncedQuery, activeView } = get();
     try {
       const list = await urlsSvc.urlsList({
         search: debouncedQuery || null,
         limit: MAX_FETCH,
+        hasStartDate: activeView === 'competitions' ? true : undefined,
       });
       // 无搜索时从全量数据计算未分类计数（有搜索时保留上次值）
       const isSearching = debouncedQuery.trim().length > 0;
@@ -142,6 +152,11 @@ export const useUrlStore = create<UrlStore>((set, get) => ({
 
   setActiveCategory: (id) => {
     set({ activeCategoryId: id, selectedIndex: 0 });
+    void get().reload();
+  },
+
+  setActiveView: (v) => {
+    set({ activeView: v, activeCategoryId: 'all', selectedIndex: 0, query: '', debouncedQuery: '' });
     void get().reload();
   },
 
@@ -175,6 +190,8 @@ export const useUrlStore = create<UrlStore>((set, get) => ({
       url: args.url,
       title: args.title ?? null,
       categoryId: args.categoryId ?? null,
+      startDate: args.startDate ?? null,
+      endDate: args.endDate ?? null,
     });
     await get().reload();
     await get().reloadCategories();
@@ -186,6 +203,8 @@ export const useUrlStore = create<UrlStore>((set, get) => ({
       title: args.title ?? null,
       categoryId: args.categoryId ?? null,
       note: args.note ?? null,
+      startDate: args.startDate ?? null,
+      endDate: args.endDate ?? null,
     });
     await get().reload();
     await get().reloadCategories();

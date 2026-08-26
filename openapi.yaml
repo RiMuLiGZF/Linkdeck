@@ -113,6 +113,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/Url'
 
+  /commands/urls_competition_count:
+    post:
+      operationId: urls_competition_count
+      summary: 返回有开始时间的链接总数（比赛计数）
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: 比赛链接数量
+          content:
+            application/json:
+              schema:
+                type: integer
+
   /commands/categories_list:
     post:
       operationId: categories_list
@@ -418,6 +437,14 @@ components:
           type: string
           nullable: true
           description: app_data_dir/favicons/{sha1(url)}.png；无则为 NULL
+        startDate:
+          type: string
+          nullable: true
+          description: 比赛开始时间（ISO8601 日期）；非空时为比赛条目
+        endDate:
+          type: string
+          nullable: true
+          description: 比赛结束时间（ISO8601 日期），可空
         createdAt:
           type: string
           description: ISO8601 时间戳（created_at TEXT）
@@ -537,6 +564,9 @@ components:
           type: integer
           default: 200
           description: 返回上限
+        hasStartDate:
+          type: boolean
+          description: true 时仅返回有开始时间的链接（比赛视图），按 startDate 升序；缺省/其他值返回全部
 
     UrlCreateArgs:
       type: object
@@ -554,6 +584,14 @@ components:
         note:
           type: string
           nullable: true
+        startDate:
+          type: string
+          nullable: true
+          description: 比赛开始时间（YYYY-MM-DD），选填
+        endDate:
+          type: string
+          nullable: true
+          description: 比赛结束时间（YYYY-MM-DD），选填
 
     UrlUpdateArgs:
       type: object
@@ -570,6 +608,14 @@ components:
         note:
           type: string
           nullable: true
+        startDate:
+          type: string
+          nullable: true
+          description: 比赛开始时间（YYYY-MM-DD），传空字符串可清除
+        endDate:
+          type: string
+          nullable: true
+          description: 比赛结束时间（YYYY-MM-DD），传空字符串可清除
 
     IdArgs:
       type: object

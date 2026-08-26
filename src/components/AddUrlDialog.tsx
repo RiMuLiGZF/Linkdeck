@@ -1,4 +1,5 @@
 // 添加 / 编辑网址（DESIGN-PAGES §2）。URL 必填且须 ^https?:// 开头；Enter 提交；Esc 关闭。
+// 可展开比赛日期字段设置 startDate / endDate。
 import { useEffect, useState } from 'react';
 import { Modal } from './Modal';
 import { Icon } from './Icon';
@@ -22,6 +23,9 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [categoryId, setCategoryId] = useState<string>(''); // '' = 未分类
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showDates, setShowDates] = useState(false);
   const [touched, setTouched] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -30,10 +34,16 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
       setName(editItem.title ?? '');
       setUrl(editItem.url);
       setCategoryId(editItem.categoryId ?? '');
+      setStartDate(editItem.startDate ?? '');
+      setEndDate(editItem.endDate ?? '');
+      setShowDates(!!editItem.startDate);
     } else if (prefill) {
       setUrl(prefill.url);
       setName(prefill.title ?? '');
       setCategoryId('');
+      setStartDate('');
+      setEndDate('');
+      setShowDates(false);
     }
     // 仅在打开时初始化一次
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,10 +60,12 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
     setSubmitError(null);
     try {
       const cat = categoryId === '' ? null : categoryId;
+      const sd = startDate.trim() || null;
+      const ed = endDate.trim() || null;
       if (editItem) {
-        await updateUrl({ id: editItem.id, title: name.trim() || null, categoryId: cat });
+        await updateUrl({ id: editItem.id, title: name.trim() || null, categoryId: cat, startDate: sd, endDate: ed });
       } else {
-        await addUrl({ url: url.trim(), title: name.trim() || null, categoryId: cat });
+        await addUrl({ url: url.trim(), title: name.trim() || null, categoryId: cat, startDate: sd, endDate: ed });
       }
       closeModal();
     } catch (e) {
@@ -142,6 +154,48 @@ export function AddUrlDialog({ onClose }: AddUrlDialogProps) {
             <Icon name="chevronDown" size={20} className="select__icon" />
           </div>
         </div>
+
+        <div className="field">
+          <button
+            type="button"
+            className="field__toggle"
+            onClick={() => setShowDates(!showDates)}
+          >
+            <Icon name="calendar" size={16} />
+            <span>比赛时间（选填）</span>
+            <Icon name={showDates ? 'chevronUp' : 'chevronDown'} size={16} className="field__toggle-icon" />
+          </button>
+        </div>
+
+        {showDates && (
+          <>
+            <div className="field">
+              <label className="field__label" htmlFor="add-start-date">
+                开始时间
+              </label>
+              <input
+                id="add-start-date"
+                className="input"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="add-end-date">
+                结束时间（选填）
+              </label>
+              <input
+                id="add-end-date"
+                className="input"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+
         {submitError && (
           <p className="field__error" role="alert">{submitError}</p>
         )}

@@ -20,6 +20,8 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
   const categories = useUrlStore((s) => s.categories);
   const urls = useUrlStore((s) => s.urls);
   const activeCategoryId = useUrlStore((s) => s.activeCategoryId);
+  const activeView = useUrlStore((s) => s.activeView);
+  const competitionCount = useUrlStore((s) => s.competitionCount);
   const query = useUrlStore((s) => s.query);
   const selectedIndex = useUrlStore((s) => s.selectedIndex);
   const uncategorizedCount = useUrlStore((s) => s.uncategorizedCount);
@@ -27,6 +29,7 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
   const setQuery = useUrlStore((s) => s.setQuery);
   const applyDebounced = useUrlStore((s) => s.applyDebounced);
   const setActiveCategory = useUrlStore((s) => s.setActiveCategory);
+  const setActiveView = useUrlStore((s) => s.setActiveView);
   const setSelectedIndex = useUrlStore((s) => s.setSelectedIndex);
   const openItem = useUrlStore((s) => s.openItem);
   const requestEdit = useUrlStore((s) => s.requestEdit);
@@ -80,8 +83,11 @@ export function LauncherPanel({ searchRef, isDragging }: LauncherPanelProps) {
         <CategorySidebar
           categories={categories}
           activeId={activeCategoryId}
+          activeView={activeView}
           uncategorizedCount={uncategorizedCount}
+          competitionCount={competitionCount}
           onSelect={setActiveCategory}
+          onViewChange={setActiveView}
           onManage={() => openModal('categories')}
         />
         <UrlList

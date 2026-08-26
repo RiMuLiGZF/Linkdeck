@@ -10,6 +10,8 @@ export interface Url {
   categoryId: string | null;
   note: string | null;
   faviconPath: string | null;
+  startDate: string | null;
+  endDate: string | null;
   createdAt: string;
 }
 
@@ -62,6 +64,7 @@ export interface UrlsListArgs {
   categoryId?: string | null;
   search?: string | null;
   limit?: number;
+  hasStartDate?: boolean;
 }
 
 export interface UrlCreateArgs {
@@ -69,6 +72,8 @@ export interface UrlCreateArgs {
   title?: string | null;
   categoryId?: string | null;
   note?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export interface UrlUpdateArgs {
@@ -76,6 +81,8 @@ export interface UrlUpdateArgs {
   title?: string | null;
   categoryId?: string | null;
   note?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export interface CategoryCreateArgs {
