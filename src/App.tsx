@@ -12,6 +12,7 @@ import { useDragDrop } from './hooks/useDragDrop';
 import { useDebouncedSearch } from './hooks/useDebouncedSearch';
 import { panelHide } from './services/tauri';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 export default function App() {
   const searchRef = useRef<HTMLInputElement>(null);
@@ -34,6 +35,8 @@ export default function App() {
   useEffect(() => {
     void useUrlStore.getState().init();
     void useSettingsStore.getState().load();
+    // 启动时同步窗口可见性：窗口初始为隐藏，由 Rust 端在 setup 中锚定右上角并显示
+    void getCurrentWindow().isVisible().then((v) => useUrlStore.getState().setVisible(v));
   }, []);
 
   // 托盘"设置"菜单：Rust 端先显示面板，再发 navigate 事件打开设置对话框

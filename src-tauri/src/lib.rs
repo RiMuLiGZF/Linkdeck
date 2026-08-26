@@ -89,16 +89,15 @@ pub fn run() {
             }
 
             // 9. 窗口锚定 + 启动显隐控制 + 拖拽事件
+            // 窗口初始为隐藏（tauri.conf.json visible:false），避免在默认位置闪现后跳位；
+            // show_on_startup 为 true 时先锚定右上角再显示，为 false 时保持隐藏常驻托盘。
             let window = app.get_webview_window("main").expect("no main window");
-            anchor_top_right(&window);
-
-            // 读取设置：若 show_on_startup 为 false 则启动后隐藏到托盘
             {
                 let state = app_handle.state::<AppState>();
                 let db = state.db.lock().unwrap();
                 if let Ok(s) = settings_repo::get(&db) {
-                    if !s.show_on_startup {
-                        let _ = window.hide();
+                    if s.show_on_startup {
+                        set_panel_visible(&window, &app_handle, true);
                     }
                 }
             }
