@@ -22,6 +22,7 @@ pub async fn settings_set(
     hotkey: String,
     default_browser: String,
     autostart: bool,
+    show_on_startup: bool,
 ) -> Result<(), AppError> {
     // 快捷键合法性校验：拒绝 IME/系统保留组合（spec §11）
     if let Err(e) = crate::shortcut::validate_shortcut(&hotkey) {
@@ -31,6 +32,7 @@ pub async fn settings_set(
         hotkey: hotkey.clone(),
         default_browser,
         autostart,
+        show_on_startup,
     };
 
     // 单锁完成读-改-写，避免双锁竞态

@@ -88,9 +88,20 @@ pub fn run() {
                 }
             }
 
-            // 9. 窗口锚定 + 拖拽事件
+            // 9. 窗口锚定 + 启动显隐控制 + 拖拽事件
             let window = app.get_webview_window("main").expect("no main window");
             anchor_top_right(&window);
+
+            // 读取设置：若 show_on_startup 为 false 则启动后隐藏到托盘
+            {
+                let state = app_handle.state::<AppState>();
+                let db = state.db.lock().unwrap();
+                if let Ok(s) = settings_repo::get(&db) {
+                    if !s.show_on_startup {
+                        let _ = window.hide();
+                    }
+                }
+            }
 
             let app_for_event = app_handle.clone();
             window.on_window_event(move |event: &tauri::WindowEvent| {

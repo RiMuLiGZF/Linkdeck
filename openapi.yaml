@@ -457,7 +457,7 @@ components:
       description: >
         settings 表 KV 行在应用层的结构化视图（键 hotkey/defaultBrowser/autostart）。
         持久化时拆回 key/value 行。
-      required: [hotkey, defaultBrowser, autostart]
+      required: [hotkey, defaultBrowser, autostart, showOnStartup]
       properties:
         hotkey:
           type: string
@@ -471,6 +471,9 @@ components:
         autostart:
           type: boolean
           description: 是否开机自启
+        showOnStartup:
+          type: boolean
+          description: 启动时是否显示窗口，false 则直接进托盘
 
     ImportResult:
       type: object

@@ -7,6 +7,7 @@ const DEFAULT_SETTINGS: Settings = {
   hotkey: 'Ctrl+Alt+Space',
   defaultBrowser: 'system',
   autostart: false,
+  showOnStartup: true,
 };
 
 interface SettingsStore {

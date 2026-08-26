@@ -36,6 +36,7 @@ pub struct Settings {
     pub hotkey: String,          // 如 "Ctrl+Alt+Space"
     pub default_browser: String, // 'chrome'|'msedge'|'firefox'|'<exe路径>'
     pub autostart: bool,
+    pub show_on_startup: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

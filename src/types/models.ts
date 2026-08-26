@@ -36,6 +36,7 @@ export interface Settings {
   hotkey: string;
   defaultBrowser: DefaultBrowser;
   autostart: boolean;
+  showOnStartup: boolean;
 }
 
 export interface ImportResult {

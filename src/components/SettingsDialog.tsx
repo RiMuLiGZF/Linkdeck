@@ -51,6 +51,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
       ? '' : settings.defaultBrowser,
   );
   const [autostart, setAutostartLocal] = useState(settings.autostart);
+  const [showOnStartup, setShowOnStartup] = useState(settings.showOnStartup);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // 快捷键录制：捕获 keydown，组装 'Mod+Key' 并校验。
@@ -134,7 +135,7 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
     if (!canSave) return;
     setSaveError(null);
     try {
-      const next: Settings = { hotkey, defaultBrowser: resolvedBrowser, autostart };
+      const next: Settings = { hotkey, defaultBrowser: resolvedBrowser, autostart, showOnStartup };
       // 自启状态已由 settings_set 在后端统一同步，无需前端再次调用
       await save(next);
       onClose();
@@ -217,6 +218,22 @@ export function SettingsDialog({ onClose }: SettingsDialogProps) {
             aria-checked={autostart}
             className={`switch${autostart ? ' switch--on' : ''}`}
             onClick={() => setAutostartLocal((v) => !v)}
+          >
+            <span className="switch__thumb" />
+          </button>
+        </label>
+      </div>
+
+      <div className="settings__section">
+        <h3 className="settings__section-title">启动行为</h3>
+        <label className="switch-row">
+          <span>启动时显示窗口</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showOnStartup}
+            className={`switch${showOnStartup ? ' switch--on' : ''}`}
+            onClick={() => setShowOnStartup((v) => !v)}
           >
             <span className="switch__thumb" />
           </button>

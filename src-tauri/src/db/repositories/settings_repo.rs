@@ -38,10 +38,14 @@ pub fn get(conn: &Connection) -> Result<Settings, AppError> {
     let autostart = read_key(conn, "autostart")?
         .map(|v| v == "true")
         .unwrap_or(false);
+    let show_on_startup = read_key(conn, "show_on_startup")?
+        .map(|v| v == "true")
+        .unwrap_or(true);
     Ok(Settings {
         hotkey,
         default_browser,
         autostart,
+        show_on_startup,
     })
 }
 
@@ -50,6 +54,7 @@ pub fn set(conn: &Connection, s: &Settings) -> Result<(), AppError> {
     upsert(conn, "hotkey", &s.hotkey)?;
     upsert(conn, "default_browser", &s.default_browser)?;
     upsert(conn, "autostart", if s.autostart { "true" } else { "false" })?;
+    upsert(conn, "show_on_startup", if s.show_on_startup { "true" } else { "false" })?;
     Ok(())
 }
 
@@ -59,6 +64,7 @@ pub fn ensure_defaults(conn: &Connection) -> Result<(), AppError> {
         upsert(conn, "hotkey", "Ctrl+Alt+Space")?;
         upsert(conn, "default_browser", "")?;
         upsert(conn, "autostart", "false")?;
+        upsert(conn, "show_on_startup", "true")?;
     }
     Ok(())
 }
